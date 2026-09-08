@@ -275,7 +275,7 @@ const MARKUP = `<header class="top">
       <label class="f">Inicio<input type="date" name="inicio" required></label>
       <label class="f">Fin<input type="date" name="fin" required></label>
       <label class="f">Avance (%)<input type="number" name="avance" min="0" max="100" step="5" value="0"><small class="help">Porcentaje completado; llena la barra del Gantt. Al marcar “Completado” se pone en 100.</small></label>
-      <label class="f">Orden<input type="number" name="orden" step="1"><small class="help">Posición dentro de su fase: número menor = aparece más arriba. Puede ser cualquier entero (11, 12, 13…); también puedes reordenar con las flechas ↑↓ en la tabla.</small></label>
+      <label class="f" id="lbl-pos">Colocar<select name="pos"></select><small class="help" id="pos-help">Dónde aparece dentro de su fase (arriba/abajo en el Gantt y en la tabla). Después también puedes moverla con las flechas ↑↓ de la tabla.</small></label><input type="hidden" name="orden">
       <label class="f full">Notas / entregables<textarea name="notas"></textarea></label>
     </div>
     <div class="actions">
@@ -564,6 +564,24 @@ function renderLog(){
 function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 /* ---------- task dialog ---------- */
+function siblingsOf(tipo, faseId, excludeId){
+  return Object.values(S.tasks).filter(x=>x.tipo===tipo && (tipo==='fase' || (x.fase||null)===(faseId||null)) && x.id!==excludeId).sort((a,b)=>(a.orden||0)-(b.orden||0));
+}
+function fillPos(){
+  const tipo=formT.dataset.tipo, faseId=tipo==='fase'?null:(formT.fase.value||null);
+  const sib=siblingsOf(tipo, faseId, editingTask);
+  const sel=formT.pos;
+  const what = tipo==='fase' ? 'las fases' : (faseId ? 'la fase' : 'las actividades sin fase');
+  let h=`<option value="0">Al inicio de ${what}</option>`;
+  sib.forEach((x,i)=>{ h+=`<option value="${i+1}">Después de: ${esc(x.nombre.length>60?x.nombre.slice(0,57)+'…':x.nombre)}</option>`; });
+  sel.innerHTML=h;
+  // default: keep current position when editing, else at the end
+  let idx=sib.length;
+  if(editingTask){ const cur=S.tasks[editingTask]; if(cur){ idx=sib.filter(x=>(x.orden||0)<(cur.orden||0)).length; } }
+  sel.value=String(idx);
+  $('#pos-help').textContent = tipo==='fase' ? 'Dónde aparece esta fase respecto a las demás (de arriba hacia abajo).' : 'Dónde aparece dentro de su fase (arriba/abajo en el Gantt y en la tabla). Después también puedes moverla con las flechas ↑↓ de la tabla.';
+}
+
 const dlgT=$('#dlg-task'), formT=$('#form-task');
 let editingTask=null;
 function openTask(id, asPhase=false){
@@ -575,8 +593,7 @@ function openTask(id, asPhase=false){
   formT.dataset.tipo=isPhase?'fase':'tarea';
   formT.nombre.value=t?.nombre||''; formT.fase.value=t?.fase||''; formT.resp.value=t?.resp||''; formT.estatus.value=t?.estatus||'pendiente';
   formT.inicio.value=t?.inicio||todayISO(); formT.fin.value=t?.fin||addDays(todayISO(),4); formT.avance.value=t?.avance??0; formT.notas.value=t?.notas||'';
-  const maxO=Math.max(0,...Object.values(S.tasks).map(x=>+x.orden||0));
-  formT.orden.value=t?.orden??(maxO+1);
+  fillPos();
   $('#task-del').style.display=t?'':'none';
   dlgT.showModal();
 }
@@ -585,11 +602,17 @@ formT.addEventListener('submit',e=>{
   const t={ id:editingTask||uid(), tipo:formT.dataset.tipo, nombre:formT.nombre.value.trim(), fase:formT.dataset.tipo==='fase'?null:(formT.fase.value||null), resp:formT.resp.value.trim(), estatus:formT.estatus.value, avance:Math.max(0,Math.min(100,+formT.avance.value||0)), inicio:formT.inicio.value, fin:formT.fin.value<formT.inicio.value?formT.inicio.value:formT.fin.value, notas:formT.notas.value.trim(), orden:+formT.orden.value||0 };
   if(t.estatus==='hecho') t.avance=100;
   const prev=editingTask?S.tasks[editingTask]:null;
+  // place among siblings according to the chosen position, renumbering the group 1..n
+  const sib=siblingsOf(t.tipo, t.fase, t.id);
+  const pos=Math.max(0,Math.min(sib.length, +formT.pos.value||0));
+  sib.splice(pos,0,t);
+  sib.forEach((x,i)=>{ const o=i+1; if(x.id===t.id) t.orden=o; else if((x.orden||0)!==o){ x.orden=o; S.tasks[x.id]=x; if(API) apiSend({op:'set',coll:'tasks',id:x.id,data:x}); } });
   store.setTask(t); toast(prev?'Guardado':'Agregado');
   if(prev && (prev.estatus!==t.estatus || prev.avance!==t.avance) && t.tipo==='tarea'){
     store.setLog({id:uid(),fecha:todayISO(),tipo:'avance',autor:'',tareaId:t.id,texto:`${t.nombre}: ${STATUS[prev.estatus]} ${prev.avance}% → ${STATUS[t.estatus]} ${t.avance}%`,resp:'',compromiso:'',hecho:false,creado:new Date().toISOString(),auto:true});
   }
 });
+formT.fase.addEventListener('change',fillPos);
 $('#task-del').onclick=()=>{ if(editingTask && confirm('¿Eliminar esta actividad? Las entradas de bitácora ligadas se conservan.')){ store.delTask(editingTask); dlgT.close(); toast('Eliminado'); } };
 
 /* ---------- log dialog ---------- */
@@ -652,7 +675,7 @@ function move(id,dir){
   const sib=Object.values(S.tasks).filter(x=>x.tipo===t.tipo && (t.tipo==='fase' || x.fase===t.fase)).sort((a,b)=>(a.orden||0)-(b.orden||0));
   const i=sib.findIndex(x=>x.id===id); const j=i+dir; if(j<0||j>=sib.length) return;
   // normalize orders within the group, then swap
-  sib.forEach((x,k)=>x.orden=(t.tipo==='fase'?(k+1)*10:(sib[0].fase?(S.tasks[sib[0].fase]?.orden||0):0)+k+1));
+  sib.forEach((x,k)=>x.orden=k+1);
   const a=sib[i].orden; sib[i].orden=sib[j].orden; sib[j].orden=a;
   store.setTask({...sib[i]}); store.setTask({...sib[j]});
 }
