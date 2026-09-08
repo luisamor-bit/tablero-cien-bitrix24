@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero Bitrix24 CIEN</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style id="css">
+:root{
+  --bg:#F2F3F6; --surface:#FFFFFF; --surface2:#E9EBF0; --line:#D6D9E1; --line2:#C3C7D2;
+  --text:#1B2435; --muted:#66708A; --faint:#9AA2B5;
+  --navy:#1F3864; --navy2:#2C4A80; --gold:#B8892B; --gold-soft:#F4EBD6;
+  --ok:#2E8B57; --ok-soft:#DDF1E4; --run:#2F6DB5; --run-soft:#DCE8F7; --warn:#D08A12; --warn-soft:#FBEBD0; --bad:#C0392B; --bad-soft:#F8DAD6; --pend:#9AA2B5; --pend-soft:#E9EBF0;
+  --today:#C0392B; --shadow:0 6px 24px rgba(27,36,53,.12);
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --cond:"IBM Plex Sans Condensed","IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171F; --surface:#1A212C; --surface2:#222B38; --line:#2F3A4A; --line2:#3C485B;
+  --text:#E8ECF3; --muted:#A3ADC0; --faint:#6B778C;
+  --navy:#8FB0E8; --navy2:#6F93D0; --gold:#D9AE55; --gold-soft:#3A3120;
+  --ok:#5CC08A; --ok-soft:#1E3A2B; --run:#6FA3E8; --run-soft:#1F3352; --warn:#E6A83C; --warn-soft:#3F3218; --bad:#E5705F; --bad-soft:#4A2521; --pend:#7D889C; --pend-soft:#2A3341;
+  --today:#E5705F; --shadow:0 6px 24px rgba(0,0,0,.45);
+}}
+:root[data-theme="dark"]{
+  --bg:#12171F; --surface:#1A212C; --surface2:#222B38; --line:#2F3A4A; --line2:#3C485B;
+  --text:#E8ECF3; --muted:#A3ADC0; --faint:#6B778C;
+  --navy:#8FB0E8; --navy2:#6F93D0; --gold:#D9AE55; --gold-soft:#3A3120;
+  --ok:#5CC08A; --ok-soft:#1E3A2B; --run:#6FA3E8; --run-soft:#1F3352; --warn:#E6A83C; --warn-soft:#3F3218; --bad:#E5705F; --bad-soft:#4A2521; --pend:#7D889C; --pend-soft:#2A3341;
+  --today:#E5705F; --shadow:0 6px 24px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+h1,h2,h3{margin:0;font-family:var(--cond);text-wrap:balance}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* header */
+.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1400px;margin:0 auto;padding:18px 24px 0;display:flex;flex-wrap:wrap;gap:16px 28px;align-items:flex-end;justify-content:space-between}
+.brand h1{font-size:26px;font-weight:700;color:var(--navy);line-height:1.1}
+.brand .sub{color:var(--muted);margin-top:4px}
+.kpis{display:flex;gap:10px;flex-wrap:wrap}
+.kpi{background:var(--surface2);border-radius:8px;padding:8px 14px;min-width:120px}
+.kpi .v{font-family:var(--cond);font-size:22px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:11px;color:var(--muted);margin-top:2px}
+.tabs{max-width:1400px;margin:0 auto;padding:14px 24px 0;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.tab{border:0;background:transparent;padding:8px 14px;border-radius:8px 8px 0 0;color:var(--muted);font-weight:500;border-bottom:2px solid transparent}
+.tab[aria-selected="true"]{color:var(--navy);border-bottom-color:var(--gold);background:var(--bg)}
+.tabs .spacer{flex:1}
+.conn{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;padding-bottom:6px}
+.conn i{width:8px;height:8px;border-radius:50%;background:var(--pend);display:inline-block}
+.conn.live i{background:var(--ok)}
+.conn.local i{background:var(--warn)}
+
+main{max-width:1400px;margin:0 auto;padding:20px 24px 60px}
+.panel{display:none}.panel.on{display:block}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar .grow{flex:1}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--navy2)}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#0F1622}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#0F1622}}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.sm{padding:3px 8px;font-size:12px;border-radius:6px}
+.btn.icon{padding:3px 6px;font-size:12px;line-height:1;border-radius:6px}
+select.btn,input.btn{padding:6px 10px}
+.hint{color:var(--muted);font-size:12px}
+
+/* status chips */
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:500;white-space:nowrap}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.s-pendiente{background:var(--pend-soft);color:var(--pend)} .s-curso{background:var(--run-soft);color:var(--run)}
+.s-hecho{background:var(--ok-soft);color:var(--ok)} .s-bloqueado{background:var(--bad-soft);color:var(--bad)} .s-riesgo{background:var(--warn-soft);color:var(--warn)}
+.t-avance{background:var(--run-soft);color:var(--run)} .t-decision{background:var(--gold-soft);color:var(--gold)} .t-riesgo{background:var(--warn-soft);color:var(--warn)} .t-paso{background:var(--ok-soft);color:var(--ok)} .t-nota{background:var(--pend-soft);color:var(--muted)}
+
+/* gantt */
+.gwrap{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:auto;box-shadow:var(--shadow)}
+.gantt{display:grid;min-width:max-content;font-size:13px}
+.gantt .hcell{position:sticky;top:0;z-index:3;background:var(--surface2);border-bottom:1px solid var(--line);text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted);padding:4px 0}
+.gantt .month{grid-row:1;border-left:1px solid var(--line2);font-weight:500;color:var(--text);text-transform:uppercase;letter-spacing:.06em}
+.gantt .wk{grid-row:2}
+.gantt .wk.now{color:var(--today);font-weight:600}
+.gantt .lab{position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--line2);border-bottom:1px solid var(--line);padding:7px 12px;display:flex;align-items:center;gap:8px;min-width:0}
+.gantt .lab.h{z-index:4;background:var(--surface2);grid-row:1/3;align-items:flex-end;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.gantt .lab .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gantt .lab .rs{font-size:11px;color:var(--muted);max-width:140px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gantt .lab.phase{background:var(--surface2);font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:var(--navy)}
+.gantt .cell{border-bottom:1px solid var(--line);border-left:1px solid var(--line);position:relative}
+.gantt .cell.month-start{border-left-color:var(--line2)}
+.gantt .cell.phase{background:var(--surface2)}
+.gantt .cell.today{background:linear-gradient(90deg,transparent 49%,var(--today) 49%,var(--today) 51%,transparent 51%)}
+.gantt .bar{grid-row:auto;height:18px;border-radius:4px;margin:8px 3px;position:relative;z-index:1;overflow:hidden;background:var(--pend-soft);cursor:pointer;border:1px solid transparent}
+.gantt .bar.phase{height:8px;margin:14px 3px;background:var(--navy);opacity:.85;border-radius:2px;cursor:default}
+.gantt .bar .fill{position:absolute;inset:0;width:0;border-radius:3px}
+.gantt .bar.curso{background:var(--run-soft)} .gantt .bar.curso .fill{background:var(--run)}
+.gantt .bar.hecho{background:var(--ok-soft)} .gantt .bar.hecho .fill{background:var(--ok)}
+.gantt .bar.pendiente{background:var(--pend-soft);border-color:var(--line2)} .gantt .bar.pendiente .fill{background:var(--pend)}
+.gantt .bar.bloqueado{background:var(--bad-soft)} .gantt .bar.bloqueado .fill{background:var(--bad)}
+.gantt .bar:hover{outline:2px solid var(--gold)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend b{width:14px;height:10px;border-radius:3px;display:inline-block}
+
+/* plan table */
+.tbl{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.tblwrap{overflow-x:auto;border-radius:10px}
+.tbl th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;background:var(--surface2);border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr.phase td{background:var(--surface2);font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--navy);font-size:12px}
+.tbl td.num{font-family:var(--mono);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tbl td.act{white-space:nowrap;text-align:right}
+.tbl tr:hover td{background:color-mix(in srgb,var(--gold) 6%,transparent)}
+.prog{display:flex;align-items:center;gap:8px;min-width:120px}
+.prog .bar{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;border:1px solid var(--line)}
+.prog .bar i{display:block;height:100%;background:var(--run)}
+.prog.hecho .bar i{background:var(--ok)}
+.prog span{font-family:var(--mono);font-size:12px;width:36px;text-align:right}
+.tbl .name{min-width:280px;max-width:520px}
+.tbl .name small{display:block;color:var(--muted);font-size:12px;margin-top:2px;white-space:normal}
+
+/* bitácora */
+.two{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:20px}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow)}
+.card h2{font-size:16px;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.card h2 .cnt{font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:400}
+.log{list-style:none;margin:0;padding:0}
+.log li{display:grid;grid-template-columns:96px 1fr auto;gap:12px;padding:12px 0;border-top:1px solid var(--line);align-items:start}
+.log li:first-child{border-top:0}
+.log .d{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:3px}
+.log .d b{display:block;color:var(--text);font-weight:500}
+.log .tx{white-space:pre-wrap}
+.log .meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;align-items:center}
+.log .meta .who{font-size:12px;color:var(--muted)}
+.log .meta .task{font-size:12px;color:var(--navy);background:var(--surface2);padding:1px 8px;border-radius:999px}
+.steps{list-style:none;margin:0;padding:0}
+.steps li{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);align-items:flex-start}
+.steps li:first-child{border-top:0}
+.steps input[type=checkbox]{margin-top:3px;accent-color:var(--ok)}
+.steps .tx{flex:1}
+.steps .tx.done{text-decoration:line-through;color:var(--muted)}
+.steps .due{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.steps .due.late{color:var(--bad);font-weight:500}
+.empty{color:var(--muted);padding:18px;text-align:center;border:1px dashed var(--line2);border-radius:8px}
+
+/* dialog */
+dialog{border:0;border-radius:12px;padding:0;background:var(--surface);color:var(--text);box-shadow:var(--shadow);width:min(640px,94vw);max-height:92vh}
+dialog::backdrop{background:rgba(15,20,30,.55)}
+dialog form{padding:20px 22px}
+dialog h2{font-size:18px;color:var(--navy);margin-bottom:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid .full{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+label.f input,label.f select,label.f textarea{border:1px solid var(--line2);background:var(--bg);border-radius:7px;padding:7px 9px;font-size:14px;color:var(--text)}
+label.f textarea{min-height:80px;resize:vertical}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;align-items:center}
+.actions .danger{margin-right:auto;color:var(--bad);border-color:transparent;background:transparent}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+@media print{.tabs,.toolbar,.btn,.conn{display:none!important}.panel{display:block!important;page-break-inside:avoid}.gwrap,.tbl,.card{box-shadow:none}}
+
+/* read-only view */
+body.ro [data-act="new-task"],body.ro [data-act="new-phase"],body.ro [data-act="new-log"],body.ro [data-act="import"],body.ro [data-act="edit"],body.ro [data-act="edit-log"],body.ro [data-act="up"],body.ro [data-act="down"],body.ro .steps input[type=checkbox]{display:none!important}
+body.ro .gantt .bar{cursor:default}
+.conn.ro i{background:var(--navy)} .conn.saving i{background:var(--gold)}
+</style>
+</head><body><div id="root"></div>
+<script id="state" type="application/json">{"meta": {"inicio": "2026-08-03", "semanas": 25, "nombre": "Tablero de proyecto Bitrix24", "actualizado": "2026-09-08T12:40:00.000Z"}, "tasks": {"f1": {"id": "f1", "tipo": "fase", "orden": 10, "nombre": "Preparación del proyecto", "fase": null, "resp": "", "estatus": "pendiente", "avance": 0, "inicio": "2026-08-03", "fin": "2026-09-11", "notas": ""}, "t04": {"id": "t04", "tipo": "tarea", "orden": 11, "fase": "f1", "nombre": "Confirmar alcance del proyecto / estructura (roles y responsabilidades)", "resp": "David Martínez · Fco. Quiroga", "estatus": "hecho", "avance": 100, "inicio": "2026-08-03", "fin": "2026-08-14", "notas": ""}, "t05": {"id": "t05", "tipo": "tarea", "orden": 12, "fase": "f1", "nombre": "Confirmar arquitectura técnica final", "resp": "Sergio Villa · WeCollab", "estatus": "hecho", "avance": 100, "inicio": "2026-08-03", "fin": "2026-08-14", "notas": ""}, "t06": {"id": "t06", "tipo": "tarea", "orden": 13, "fase": "f1", "nombre": "Confirmar recursos internos, negociación y contratación con proveedor Bitrix24", "resp": "David Martínez", "estatus": "curso", "avance": 80, "inicio": "2026-08-03", "fin": "2026-09-04", "notas": "WeCollab aprobado como proveedor principal."}, "t07": {"id": "t07", "tipo": "tarea", "orden": 14, "fase": "f1", "nombre": "Decidir estrategia de implementación y arranque (paralelo vs. big bang)", "resp": "Comité de Dirección · David Martínez", "estatus": "curso", "avance": 40, "inicio": "2026-08-24", "fin": "2026-09-04", "notas": ""}, "t08": {"id": "t08", "tipo": "tarea", "orden": 15, "fase": "f1", "nombre": "Detallar plan de trabajo, material para kickoff y fecha de kickoff", "resp": "Fco. Quiroga · Luis Amor", "estatus": "curso", "avance": 50, "inicio": "2026-08-31", "fin": "2026-09-11", "notas": ""}, "f2": {"id": "f2", "tipo": "fase", "orden": 20, "nombre": "Kickoff y arranque de instalación (diseño, configuración)", "fase": null, "resp": "", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-14", "fin": "2026-11-13", "notas": ""}, "t10": {"id": "t10", "tipo": "tarea", "orden": 21, "fase": "f2", "nombre": "Kickoff del proyecto", "resp": "Fco. Quiroga", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-14", "fin": "2026-09-18", "notas": ""}, "t11": {"id": "t11", "tipo": "tarea", "orden": 22, "fase": "f2", "nombre": "Visita del proveedor a instalaciones CIEN (Monterrey)", "resp": "WeCollab (Pepe · Luis)", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-21", "fin": "2026-09-25", "notas": ""}, "t12": {"id": "t12", "tipo": "tarea", "orden": 23, "fase": "f2", "nombre": "Detallar diseño (mapeo de procesos, estructura organizacional, embudos, campos personalizados)", "resp": "WeCollab · Call Center, Ventas, Servicio a Clientes", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-14", "fin": "2026-10-16", "notas": ""}, "t13": {"id": "t13", "tipo": "tarea", "orden": 24, "fase": "f2", "nombre": "Análisis técnico y conexiones Bitrix24 ↔ VOISO ↔ C3", "resp": "Edwin Jiménez · Sergio Villa · WeCollab", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-14", "fin": "2026-11-13", "notas": ""}, "t14": {"id": "t14", "tipo": "tarea", "orden": 25, "fase": "f2", "nombre": "Configuración Bitrix24 (cuenta, permisos, organigrama, personalizaciones)", "resp": "Pepe González (WeCollab)", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-21", "fin": "2026-11-13", "notas": ""}, "t15": {"id": "t15", "tipo": "tarea", "orden": 26, "fase": "f2", "nombre": "Modelado de embudo, canales e integraciones (bot de formularios)", "resp": "Luis Amor (WeCollab)", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-21", "fin": "2026-11-13", "notas": ""}, "f3": {"id": "f3", "tipo": "fase", "orden": 30, "nombre": "Implementación", "fase": null, "resp": "", "estatus": "pendiente", "avance": 0, "inicio": "2026-11-16", "fin": "2026-12-11", "notas": ""}, "t17": {"id": "t17", "tipo": "tarea", "orden": 31, "fase": "f3", "nombre": "Migración de datos y pruebas integrales", "resp": "Orlando Morales · WeCollab", "estatus": "pendiente", "avance": 0, "inicio": "2026-11-16", "fin": "2026-12-04", "notas": ""}, "t18": {"id": "t18", "tipo": "tarea", "orden": 32, "fase": "f3", "nombre": "Capacitación", "resp": "WeCollab", "estatus": "pendiente", "avance": 0, "inicio": "2026-11-23", "fin": "2026-12-11", "notas": ""}, "f4": {"id": "f4", "tipo": "fase", "orden": 40, "nombre": "Arranque", "fase": null, "resp": "", "estatus": "pendiente", "avance": 0, "inicio": "2026-11-30", "fin": "2027-01-22", "notas": ""}, "t20": {"id": "t20", "tipo": "tarea", "orden": 41, "fase": "f4", "nombre": "Paralelo", "resp": "Áreas usuarias · Fco. Quiroga", "estatus": "pendiente", "avance": 0, "inicio": "2026-11-30", "fin": "2026-12-25", "notas": ""}, "t21": {"id": "t21", "tipo": "tarea", "orden": 42, "fase": "f4", "nombre": "Despliegue y soporte", "resp": "WeCollab", "estatus": "pendiente", "avance": 0, "inicio": "2026-12-28", "fin": "2027-01-22", "notas": ""}}, "log": {"l01": {"id": "l01", "fecha": "2026-09-04", "tipo": "nota", "texto": "Francisco Quiroga envía el plan de trabajo v6 (Excel) y pide a WeCollab tomarlo como base y ajustarlo. Queda como plan maestro del proyecto.", "autor": "Fco. Quiroga", "tareaId": "t08", "resp": "", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l02": {"id": "l02", "fecha": "2026-09-08", "tipo": "decision", "texto": "WeCollab confirmado como proveedor principal de la implementación Bitrix24.", "autor": "Luis Amor", "tareaId": "t06", "resp": "", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l03": {"id": "l03", "fecha": "2026-09-08", "tipo": "nota", "texto": "Responsables por actividad cargados como propuesta inicial a partir del organigrama del proyecto; pendiente validarlos con Quiroga.", "autor": "Luis Amor", "tareaId": "t08", "resp": "", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l04": {"id": "l04", "fecha": "2026-09-08", "tipo": "paso", "texto": "Fijar fecha firme de kickoff (semana del 14-sep) y de la visita a Monterrey (semana del 21-sep).", "autor": "Luis Amor", "tareaId": "t10", "resp": "Fco. Quiroga · Luis Amor", "compromiso": "2026-09-11", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l05": {"id": "l05", "fecha": "2026-09-08", "tipo": "paso", "texto": "Cerrar decisión de estrategia de arranque: paralelo vs. big bang.", "autor": "Luis Amor", "tareaId": "t07", "resp": "Comité de Dirección · David Martínez", "compromiso": "2026-09-11", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l06": {"id": "l06", "fecha": "2026-09-08", "tipo": "paso", "texto": "Identificar el CRM actual, volumen de registros y quién entrega la exportación para dimensionar la migración.", "autor": "Luis Amor", "tareaId": "t17", "resp": "Edwin Jiménez · Orlando Morales", "compromiso": "2026-09-18", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l07": {"id": "l07", "fecha": "2026-09-08", "tipo": "paso", "texto": "Documentar la lógica actual de VOISO (campañas de seguimiento) antes de diseñar la integración.", "autor": "Luis Amor", "tareaId": "t13", "resp": "Horacio Díaz · Sergio Villa", "compromiso": "2026-09-25", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l08": {"id": "l08", "fecha": "2026-09-08", "tipo": "paso", "texto": "Inventario de formularios y canales de entrada (web, Meta, WhatsApp, portal) que entran al bot en fase 1.", "autor": "Luis Amor", "tareaId": "t15", "resp": "Luis Amor · Mayra Fernández", "compromiso": "2026-09-25", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l09": {"id": "l09", "fecha": "2026-09-08", "tipo": "paso", "texto": "Definir punto único de contacto técnico de CIEN y accesos de administrador del portal Bitrix24 para WeCollab.", "autor": "Luis Amor", "tareaId": "t14", "resp": "Edwin Jiménez", "compromiso": "2026-09-18", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l10": {"id": "l10", "fecha": "2026-09-08", "tipo": "riesgo", "texto": "El paralelo cae en diciembre (S18–S21), cierre de año: nuestra propuesta recomendaba corte a mediados de noviembre. Mitigación: congelar configuración antes del 15-dic, definir cobertura en semanas vacacionales y plan si la migración se atrasa una semana.", "autor": "Luis Amor", "tareaId": "t20", "resp": "Fco. Quiroga · WeCollab", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l11": {"id": "l11", "fecha": "2026-09-08", "tipo": "riesgo", "texto": "Integración VOISO exige replicar la lógica actual de campañas de seguimiento, que no está documentada.", "autor": "Luis Amor", "tareaId": "t13", "resp": "Horacio Díaz · Sergio Villa", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l12": {"id": "l12", "fecha": "2026-09-08", "tipo": "riesgo", "texto": "Apagar el Portal Superlativo es un cambio de hábito para usuarios: requiere plan de adopción y fecha de apagado acordada.", "autor": "Luis Amor", "tareaId": "t21", "resp": "Áreas usuarias · Fco. Quiroga", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}}}</script>
+<script id="app">
+(() => {
+'use strict';
+const MARKUP = `<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="eyebrow">CIEN Grupo Inmobiliario · Implementación Bitrix24 · WeCollab</div>
+      <h1 id="title">Tablero de proyecto Bitrix24</h1>
+      <div class="sub" id="subtitle">Plan maestro v6 (F. Quiroga, 4-sep-2026) · gestión de avances, siguientes pasos y bitácora</div>
+      <div class="hint" id="updated"></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="gantt" aria-selected="true">Gantt</button>
+    <button class="tab" role="tab" data-tab="plan">Plan de trabajo</button>
+    <button class="tab" role="tab" data-tab="log">Bitácora y siguientes pasos</button>
+    <span class="spacer"></span>
+    <span class="conn" id="conn"><i></i><span>conectando…</span></span>
+  </nav>
+</header>
+
+<main>
+  <!-- GANTT -->
+  <section class="panel on" id="p-gantt">
+    <div class="toolbar">
+      <button class="btn primary" data-act="new-task">+ Actividad</button>
+      <button class="btn" data-act="new-phase">+ Fase</button>
+      <span class="grow"></span>
+      <span class="hint" id="gantt-hint"></span>
+    </div>
+    <div class="gwrap"><div class="gantt" id="gantt"></div></div>
+    <div class="legend">
+      <span><b style="background:var(--ok)"></b>Completado</span>
+      <span><b style="background:var(--run)"></b>En curso (relleno = % avance)</span>
+      <span><b style="background:var(--pend-soft);border:1px solid var(--line2)"></b>Pendiente</span>
+      <span><b style="background:var(--bad)"></b>Bloqueado</span>
+      <span><b style="background:var(--navy);height:5px"></b>Fase</span>
+      <span><b style="background:var(--today);width:2px"></b>Semana actual</span>
+      <span class="hint">Clic en una barra para editar.</span>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="panel" id="p-plan">
+    <div class="toolbar">
+      <button class="btn primary" data-act="new-task">+ Actividad</button>
+      <button class="btn" data-act="new-phase">+ Fase</button>
+      <select class="btn" id="f-status"><option value="">Todos los estatus</option><option value="pendiente">Pendiente</option><option value="curso">En curso</option><option value="hecho">Completado</option><option value="bloqueado">Bloqueado</option></select>
+      <input class="btn" id="f-resp" placeholder="Filtrar por responsable" style="min-width:200px">
+      <span class="grow"></span>
+      <button class="btn" data-act="export">Exportar JSON</button>
+      <button class="btn" data-act="import">Importar</button>
+      <button class="btn" data-act="download" title="Descarga esta página con los datos actuales para subirla a Bitrix24 Sites">Descargar HTML</button>
+      <button class="btn ghost" onclick="window.print()">Imprimir</button>
+    </div>
+    <div class="tblwrap"><table class="tbl" id="plan"></table></div>
+  </section>
+
+  <!-- LOG -->
+  <section class="panel" id="p-log">
+    <div class="two">
+      <div class="card">
+        <h2>Bitácora <span class="cnt" id="log-cnt"></span><span class="grow" style="flex:1"></span><button class="btn primary sm" data-act="new-log">+ Entrada</button></h2>
+        <div class="toolbar" style="margin-bottom:6px">
+          <select class="btn" id="f-logtype"><option value="">Todo</option><option value="avance">Avances</option><option value="decision">Decisiones</option><option value="riesgo">Riesgos</option><option value="paso">Siguientes pasos</option><option value="nota">Notas</option></select>
+        </div>
+        <ul class="log" id="log"></ul>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:20px">
+          <h2>Siguientes pasos abiertos <span class="cnt" id="steps-cnt"></span></h2>
+          <ul class="steps" id="steps"></ul>
+        </div>
+        <div class="card">
+          <h2>Riesgos abiertos <span class="cnt" id="risk-cnt"></span></h2>
+          <ul class="steps" id="risks"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlg-task">
+  <form method="dialog" id="form-task">
+    <h2 id="dlg-task-title">Actividad</h2>
+    <div class="grid">
+      <label class="f full">Nombre<input name="nombre" required></label>
+      <label class="f full" id="lbl-fase">Fase<select name="fase"></select></label>
+      <label class="f">Responsable<input name="resp" placeholder="p. ej. WeCollab / Sergio Villa"></label>
+      <label class="f">Estatus<select name="estatus"><option value="pendiente">Pendiente</option><option value="curso">En curso</option><option value="hecho">Completado</option><option value="bloqueado">Bloqueado</option></select></label>
+      <label class="f">Inicio<input type="date" name="inicio" required></label>
+      <label class="f">Fin<input type="date" name="fin" required></label>
+      <label class="f">Avance (%)<input type="number" name="avance" min="0" max="100" step="5" value="0"></label>
+      <label class="f">Orden<input type="number" name="orden" step="1"></label>
+      <label class="f full">Notas / entregables<textarea name="notas"></textarea></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn danger" id="task-del">Eliminar</button>
+      <button type="button" class="btn" value="cancel" onclick="this.closest('dialog').close()">Cancelar</button>
+      <button class="btn primary" value="ok">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-log">
+  <form method="dialog" id="form-log">
+    <h2 id="dlg-log-title">Entrada de bitácora</h2>
+    <div class="grid">
+      <label class="f">Fecha<input type="date" name="fecha" required></label>
+      <label class="f">Tipo<select name="tipo"><option value="avance">Avance</option><option value="decision">Decisión</option><option value="riesgo">Riesgo</option><option value="paso">Siguiente paso</option><option value="nota">Nota</option></select></label>
+      <label class="f">Registrado por<input name="autor" placeholder="Luis / Pepe / Quiroga"></label>
+      <label class="f">Actividad relacionada<select name="tareaId"><option value="">—</option></select></label>
+      <label class="f full">Detalle<textarea name="texto" required></textarea></label>
+      <label class="f">Responsable (pasos / riesgos)<input name="resp"></label>
+      <label class="f">Fecha compromiso<input type="date" name="compromiso"></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn danger" id="log-del">Eliminar</button>
+      <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
+      <button class="btn primary" value="ok">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-io">
+  <form method="dialog" id="form-io">
+    <h2 id="dlg-io-title">Exportar / importar</h2>
+    <label class="f full">JSON del proyecto (plan, bitácora y configuración)<textarea name="json" style="min-height:260px;font-family:var(--mono);font-size:12px"></textarea></label>
+    <p class="hint" id="io-hint"></p>
+    <div class="actions">
+      <button type="button" class="btn" onclick="this.closest('dialog').close()">Cerrar</button>
+      <button class="btn primary" value="ok" id="io-ok">Importar y reemplazar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>`;
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const uid = () => Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4);
+const todayISO = () => { const d=new Date(); return d.toISOString().slice(0,10); };
+const STATUS = {pendiente:'Pendiente', curso:'En curso', hecho:'Completado', bloqueado:'Bloqueado'};
+const TIPO = {avance:'Avance', decision:'Decisión', riesgo:'Riesgo', paso:'Siguiente paso', nota:'Nota'};
+const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const fmtD = iso => { if(!iso) return ''; const [y,m,d]=iso.split('-').map(Number); return `${d} ${MESES[m-1].toLowerCase()}`; };
+const fmtDY = iso => { if(!iso) return ''; const [y,m,d]=iso.split('-').map(Number); return `${d} ${MESES[m-1].toLowerCase()} ${y}`; };
+const addDays = (iso,n) => { const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const daysBetween = (a,b) => Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000);
+
+/* ---------- state ---------- */
+const S = { meta:{ inicio:'2026-08-03', semanas:25, nombre:'Tablero de proyecto Bitrix24' }, tasks:{}, log:{} };
+let backend = null;   // 'db' | 'local'
+let db = null;
+let toastT;
+const toast = m => { const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2200); };
+
+/* ---------- base plan (used only when no shared store is available) ---------- */
+
+/* ---------- markup ---------- */
+document.getElementById('root').innerHTML = MARKUP;
+
+/* ---------- state: embedded in the page itself ---------- */
+(function loadState(){
+  try{ const el=document.getElementById('state'); if(el && el.textContent.trim()){ const o=JSON.parse(el.textContent); Object.assign(S.meta,o.meta||{}); S.tasks=o.tasks||{}; S.log=o.log||{}; } }catch(e){ console.error('estado ilegible',e); }
+})();
+// Hosted copy (GitHub Pages): live data comes from data.json next to this file; the embedded state is the fallback.
+(async function loadRemote(){
+  if(window.claude && window.claude.use) return;           // inside the Claude viewer the page itself is the record
+  try{ const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return; const o=await r.json();
+    if(o && o.tasks){ Object.assign(S.meta,o.meta||{}); S.tasks=o.tasks||{}; S.log=o.log||{}; render(); } }catch(_){}
+})();
+const LS_KEY = 'cien-bitrix-tablero-v2';
+let artifact=null, downloads=null, readOnly=false, publishT=null, dirty=false;
+
+function serialize(){ return JSON.stringify({meta:S.meta,tasks:S.tasks,log:S.log}).replace(/<\//g,'<\\/'); }
+function buildHTML(){
+  const css=document.getElementById('css').textContent;
+  const app=document.getElementById('app').textContent;
+  const T='<'+'/script>';
+  return '<!doctype html>\n<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tablero Bitrix24 CIEN</title>'
+    +'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">'
+    +'<style id="css">'+css+'</style></head><body><div id="root"></div>\n'
+    +'<script id="state" type="application/json">'+serialize()+T+'\n'
+    +'<script id="app">'+app+T+'\n</body></html>';
+}
+function setConn(cls,txt){ const c=$('#conn'); c.className='conn '+cls; c.lastElementChild.textContent=txt; }
+function enterReadOnly(msg){
+  readOnly=true; document.body.classList.add('ro');
+  setConn('ro', msg||'solo lectura');
+}
+function schedulePublish(){
+  dirty=true; S.meta.actualizado=new Date().toISOString();
+  if(readOnly || !artifact){ setConn('local','cambios sin guardar (vista sin permiso de edición)'); return; }
+  setConn('saving','guardando…');
+  clearTimeout(publishT);
+  publishT=setTimeout(async()=>{
+    try{
+      await artifact.publish(buildHTML());
+      dirty=false; setConn('live','guardado · recargando');
+    }catch(e){
+      const code=e&&e.code;
+      if(code==='not_writer'||code==='not_granted'){ enterReadOnly('solo lectura · tus cambios no se guardan'); toast('Esta vista es de solo lectura'); }
+      else if(code==='conflict'){ setConn('live','otra persona guardó · recargando'); }
+      else if(code==='rate_limited'){ setConn('saving','esperando para guardar…'); setTimeout(schedulePublish,4000); }
+      else { console.error(e); setConn('local','no se pudo guardar'); toast('No se pudo guardar: '+(code||'error')); }
+    }
+  },1200);
+}
+const store = {
+  async setTask(t){ S.tasks[t.id]=t; render(); schedulePublish(); },
+  async delTask(id){ delete S.tasks[id]; Object.values(S.tasks).forEach(t=>{ if(t.fase===id) t.fase=null; }); render(); schedulePublish(); },
+  async setLog(e){ S.log[e.id]=e; render(); schedulePublish(); },
+  async delLog(id){ delete S.log[id]; render(); schedulePublish(); },
+  async setMeta(m){ Object.assign(S.meta,m); render(); schedulePublish(); },
+  async replaceAll(data){ Object.assign(S.meta,data.meta); S.tasks=data.tasks; S.log=data.log; render(); schedulePublish(); }
+};
+async function downloadHTML(){
+  const html=buildHTML(); const name='tablero-bitrix24-cien.html';
+  if(downloads){ try{ await downloads.save({filename:name,data:html}); toast('Archivo listo'); return; }catch(e){ if(e&&e.code==='declined') return; console.error(e); } }
+  try{ await navigator.clipboard.writeText(html); toast('HTML copiado al portapapeles'); }catch(_){ toast('No se pudo descargar en esta vista'); }
+}
+
+async function connect(){
+  if(!(window.claude && window.claude.use)){ enterReadOnly('vista publicada · solo lectura'); return; }
+  [artifact,downloads]=await Promise.all([window.claude.use('artifact'), window.claude.use('downloads')]);
+  if(!artifact){ enterReadOnly('vista publicada · solo lectura'); return; }
+  setConn('live','edición en vivo · los cambios se publican solos');
+}
+
+
+/* ---------- derived ---------- */
+function ordered(){
+  const all=Object.values(S.tasks);
+  const phases=all.filter(t=>t.tipo==='fase').sort((a,b)=>(a.orden||0)-(b.orden||0));
+  const out=[];
+  const used=new Set();
+  for(const p of phases){
+    used.add(p.id);
+    const kids=all.filter(t=>t.tipo!=='fase' && t.fase===p.id).sort((a,b)=>(a.orden||0)-(b.orden||0));
+    kids.forEach(k=>used.add(k.id));
+    // phase span follows its activities when it has any
+    const span = kids.length ? {inicio: kids.map(k=>k.inicio).sort()[0], fin: kids.map(k=>k.fin).sort().slice(-1)[0]} : {inicio:p.inicio, fin:p.fin};
+    const av = kids.length ? Math.round(kids.reduce((s,k)=>s+(+k.avance||0),0)/kids.length) : (+p.avance||0);
+    out.push({...p, ...span, avance:av, kids});
+    kids.forEach(k=>out.push(k));
+  }
+  const orphans=all.filter(t=>!used.has(t.id)).sort((a,b)=>(a.orden||0)-(b.orden||0));
+  if(orphans.length){ out.push({id:'__none',tipo:'fase',nombre:'Sin fase',inicio:orphans.map(k=>k.inicio).sort()[0],fin:orphans.map(k=>k.fin).sort().slice(-1)[0],avance:0,kids:orphans,virtual:true}); orphans.forEach(o=>out.push(o)); }
+  return out;
+}
+function weekOf(iso){ return Math.floor(daysBetween(S.meta.inicio, iso)/7)+1; }
+
+/* ---------- render ---------- */
+function render(){ renderKpis(); renderGantt(); renderPlan(); renderLog(); }
+
+function renderKpis(){
+  const tasks=Object.values(S.tasks).filter(t=>t.tipo!=='fase');
+  const n=tasks.length, done=tasks.filter(t=>t.estatus==='hecho').length, run=tasks.filter(t=>t.estatus==='curso').length, blk=tasks.filter(t=>t.estatus==='bloqueado').length;
+  const avg=n?Math.round(tasks.reduce((s,t)=>s+(+t.avance||0),0)/n):0;
+  const wk=weekOf(todayISO());
+  const late=tasks.filter(t=>t.estatus!=='hecho' && t.fin<todayISO()).length;
+  const steps=Object.values(S.log).filter(e=>e.tipo==='paso'&&!e.hecho).length;
+  $('#kpis').innerHTML=[
+    ['S'+wk,'semana del plan · '+fmtD(todayISO())],
+    [avg+'%','avance global'],
+    [done+'/'+n,'actividades completadas'],
+    [run,'en curso'],
+    [late,'vencidas'],
+    [steps,'pasos abiertos'],
+  ].map(([v,l],i)=>`<div class="kpi"><div class="v" style="${i===4&&late?'color:var(--bad)':''}${i===0?'color:var(--navy)':''}">${v}</div><div class="l">${l}</div></div>`).join('');
+  $('#title').textContent=S.meta.nombre||'Tablero de proyecto Bitrix24';
+  const u=S.meta.actualizado; $('#updated').textContent=u?('Última actualización: '+new Date(u).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'})):'';
+}
+
+function renderGantt(){
+  const rows=ordered();
+  const W=S.meta.semanas||25; const g=$('#gantt');
+  g.style.gridTemplateColumns=`minmax(380px,470px) repeat(${W},44px)`;
+  const tw=weekOf(todayISO());
+  let h='';
+  h+=`<div class="lab h">Actividad · responsable</div>`;
+  // month headers
+  let col=2; let i=1;
+  while(i<=W){
+    const m=new Date(addDays(S.meta.inicio,(i-1)*7)+'T00:00:00').getMonth(); let j=i;
+    while(j+1<=W && new Date(addDays(S.meta.inicio,j*7)+'T00:00:00').getMonth()===m) j++;
+    const y=new Date(addDays(S.meta.inicio,(i-1)*7)+'T00:00:00').getFullYear();
+    h+=`<div class="hcell month" style="grid-column:${col}/${col+(j-i+1)}">${MESES[m]} ${String(y).slice(2)}</div>`;
+    col+=j-i+1; i=j+1;
+  }
+  for(let w=1;w<=W;w++) h+=`<div class="hcell wk ${w===tw?'now':''}" style="grid-column:${w+1};grid-row:2" title="${fmtDY(addDays(S.meta.inicio,(w-1)*7))}">S${w}</div>`;
+  let r=3;
+  for(const t of rows){
+    const isP=t.tipo==='fase';
+    const s=Math.max(1,weekOf(t.inicio)), e=Math.min(W,weekOf(t.fin));
+    h+=`<div class="lab ${isP?'phase':''}" style="grid-row:${r}" title="${esc(t.nombre)}${t.resp?' — '+esc(t.resp):''}">${isP?'':`<span class="chip s-${t.estatus}" style="padding:1px 6px;font-size:10px"></span>`}<span class="nm">${esc(t.nombre)}</span>${t.resp&&!isP?`<span class="rs">${esc(t.resp)}</span>`:''}</div>`;
+    for(let w=1;w<=W;w++){
+      const ms=new Date(addDays(S.meta.inicio,(w-1)*7)+'T00:00:00').getDate()<=7;
+      h+=`<div class="cell ${isP?'phase':''} ${ms?'month-start':''} ${w===tw?'today':''}" style="grid-column:${w+1};grid-row:${r}"></div>`;
+    }
+    if(e>=s){
+      const pct=isP?t.avance:(t.estatus==='hecho'?100:(+t.avance||0));
+      h+=`<div class="bar ${isP?'phase':t.estatus}" data-id="${t.virtual?'':t.id}" style="grid-column:${s+1}/${e+2};grid-row:${r}" title="${esc(t.nombre)} · ${fmtD(t.inicio)} → ${fmtD(t.fin)} · ${pct}%">${isP?'':`<i class="fill" style="width:${pct}%"></i>`}</div>`;
+    }
+    r++;
+  }
+  g.innerHTML=h;
+  $('#gantt-hint').textContent=`${rows.filter(t=>t.tipo!=='fase').length} actividades · S1 = ${fmtDY(S.meta.inicio)} · ${W} semanas`;
+}
+
+function renderPlan(){
+  const fs=$('#f-status').value, fr=($('#f-resp').value||'').toLowerCase();
+  const rows=ordered();
+  let h=`<thead><tr><th style="width:36px">#</th><th>Actividad</th><th>Responsable</th><th>Estatus</th><th>Avance</th><th>Inicio</th><th>Fin</th><th>Sem.</th><th></th></tr></thead><tbody>`;
+  let n=0;
+  for(const t of rows){
+    if(t.tipo==='fase'){
+      h+=`<tr class="phase" data-id="${t.virtual?'':t.id}"><td></td><td colspan="3">${esc(t.nombre)}</td><td><div class="prog ${t.avance===100?'hecho':''}"><div class="bar"><i style="width:${t.avance}%"></i></div><span>${t.avance}%</span></div></td><td class="num">${fmtD(t.inicio)}</td><td class="num">${fmtD(t.fin)}</td><td class="num">S${weekOf(t.inicio)}–S${weekOf(t.fin)}</td><td class="act">${t.virtual?'':`<button class="btn icon" data-act="up" data-id="${t.id}" title="Subir">↑</button><button class="btn icon" data-act="down" data-id="${t.id}" title="Bajar">↓</button><button class="btn sm" data-act="edit" data-id="${t.id}">Editar</button>`}</td></tr>`;
+      continue;
+    }
+    if(fs && t.estatus!==fs) continue;
+    if(fr && !(t.resp||'').toLowerCase().includes(fr)) continue;
+    n++;
+    const late=t.estatus!=='hecho'&&t.fin<todayISO();
+    h+=`<tr data-id="${t.id}"><td class="num">${n}</td><td class="name">${esc(t.nombre)}${t.notas?`<small>${esc(t.notas)}</small>`:''}</td><td>${esc(t.resp||'—')}</td><td><span class="chip s-${t.estatus}">${STATUS[t.estatus]||t.estatus}</span></td><td><div class="prog ${t.estatus==='hecho'?'hecho':''}"><div class="bar"><i style="width:${t.estatus==='hecho'?100:(+t.avance||0)}%"></i></div><span>${t.estatus==='hecho'?100:(+t.avance||0)}%</span></div></td><td class="num">${fmtD(t.inicio)}</td><td class="num" style="${late?'color:var(--bad);font-weight:500':''}">${fmtD(t.fin)}</td><td class="num">S${weekOf(t.inicio)}${weekOf(t.fin)!==weekOf(t.inicio)?'–S'+weekOf(t.fin):''}</td><td class="act"><button class="btn icon" data-act="up" data-id="${t.id}" title="Subir">↑</button><button class="btn icon" data-act="down" data-id="${t.id}" title="Bajar">↓</button><button class="btn sm" data-act="edit" data-id="${t.id}">Editar</button></td></tr>`;
+  }
+  h+='</tbody>';
+  $('#plan').innerHTML=h;
+}
+
+function renderLog(){
+  const ft=$('#f-logtype').value;
+  const entries=Object.values(S.log).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||(b.creado||'').localeCompare(a.creado||''));
+  const list=entries.filter(e=>!ft||e.tipo===ft);
+  $('#log-cnt').textContent=`${list.length} entradas`;
+  $('#log').innerHTML=list.length?list.map(e=>`<li data-id="${e.id}">
+      <div class="d"><b>${fmtD(e.fecha)}</b>${(e.fecha||'').slice(0,4)}</div>
+      <div><div class="meta"><span class="chip t-${e.tipo}">${TIPO[e.tipo]||e.tipo}</span>${e.tareaId&&S.tasks[e.tareaId]?`<span class="task">${esc(S.tasks[e.tareaId].nombre)}</span>`:''}${e.autor?`<span class="who">${esc(e.autor)}</span>`:''}${e.resp?`<span class="who">→ ${esc(e.resp)}</span>`:''}${e.compromiso?`<span class="who">compromiso ${fmtD(e.compromiso)}</span>`:''}${e.hecho?`<span class="chip s-hecho">cerrado</span>`:''}</div><div class="tx">${esc(e.texto)}</div></div>
+      <button class="btn sm ghost" data-act="edit-log" data-id="${e.id}">Editar</button></li>`).join('')
+    :`<li><div class="empty" style="grid-column:1/-1">Sin entradas. Registra avances, decisiones, riesgos y siguientes pasos de cada junta.</div></li>`;
+  const steps=entries.filter(e=>e.tipo==='paso').sort((a,b)=>(a.hecho-b.hecho)||(a.compromiso||'9').localeCompare(b.compromiso||'9'));
+  const open=steps.filter(s=>!s.hecho);
+  $('#steps-cnt').textContent=`${open.length} abiertos`;
+  $('#steps').innerHTML=steps.length?steps.slice(0,30).map(s=>`<li><input type="checkbox" data-act="toggle" data-id="${s.id}" ${s.hecho?'checked':''}><div class="tx ${s.hecho?'done':''}">${esc(s.texto)}${s.resp?`<div class="hint">${esc(s.resp)}</div>`:''}</div><span class="due ${!s.hecho&&s.compromiso&&s.compromiso<todayISO()?'late':''}">${s.compromiso?fmtD(s.compromiso):''}</span></li>`).join('')
+    :`<li><div class="empty" style="flex:1">Agrega una entrada de tipo “Siguiente paso” con responsable y fecha compromiso.</div></li>`;
+  const risks=entries.filter(e=>e.tipo==='riesgo'&&!e.hecho);
+  $('#risk-cnt').textContent=`${risks.length}`;
+  $('#risks').innerHTML=risks.length?risks.map(s=>`<li><input type="checkbox" data-act="toggle" data-id="${s.id}" title="Marcar como mitigado"><div class="tx">${esc(s.texto)}${s.resp?`<div class="hint">${esc(s.resp)}</div>`:''}</div><span class="due">${s.compromiso?fmtD(s.compromiso):''}</span></li>`).join('')
+    :`<li><div class="empty" style="flex:1">Sin riesgos abiertos.</div></li>`;
+}
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- task dialog ---------- */
+const dlgT=$('#dlg-task'), formT=$('#form-task');
+let editingTask=null;
+function openTask(id, asPhase=false){
+  const t=id?S.tasks[id]:null; editingTask=id||null;
+  const isPhase = t ? t.tipo==='fase' : asPhase;
+  $('#dlg-task-title').textContent = t ? (isPhase?'Editar fase':'Editar actividad') : (isPhase?'Nueva fase':'Nueva actividad');
+  const sel=formT.fase; sel.innerHTML='<option value="">— sin fase —</option>'+Object.values(S.tasks).filter(x=>x.tipo==='fase').sort((a,b)=>a.orden-b.orden).map(p=>`<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
+  $('#lbl-fase').style.display=isPhase?'none':'';
+  formT.dataset.tipo=isPhase?'fase':'tarea';
+  formT.nombre.value=t?.nombre||''; formT.fase.value=t?.fase||''; formT.resp.value=t?.resp||''; formT.estatus.value=t?.estatus||'pendiente';
+  formT.inicio.value=t?.inicio||todayISO(); formT.fin.value=t?.fin||addDays(todayISO(),4); formT.avance.value=t?.avance??0; formT.notas.value=t?.notas||'';
+  const maxO=Math.max(0,...Object.values(S.tasks).map(x=>+x.orden||0));
+  formT.orden.value=t?.orden??(maxO+1);
+  $('#task-del').style.display=t?'':'none';
+  dlgT.showModal();
+}
+formT.addEventListener('submit',e=>{
+  if(e.submitter && e.submitter.value!=='ok') return;
+  const t={ id:editingTask||uid(), tipo:formT.dataset.tipo, nombre:formT.nombre.value.trim(), fase:formT.dataset.tipo==='fase'?null:(formT.fase.value||null), resp:formT.resp.value.trim(), estatus:formT.estatus.value, avance:Math.max(0,Math.min(100,+formT.avance.value||0)), inicio:formT.inicio.value, fin:formT.fin.value<formT.inicio.value?formT.inicio.value:formT.fin.value, notas:formT.notas.value.trim(), orden:+formT.orden.value||0 };
+  if(t.estatus==='hecho') t.avance=100;
+  const prev=editingTask?S.tasks[editingTask]:null;
+  store.setTask(t); toast(prev?'Guardado':'Agregado');
+  if(prev && (prev.estatus!==t.estatus || prev.avance!==t.avance) && t.tipo==='tarea'){
+    store.setLog({id:uid(),fecha:todayISO(),tipo:'avance',autor:'',tareaId:t.id,texto:`${t.nombre}: ${STATUS[prev.estatus]} ${prev.avance}% → ${STATUS[t.estatus]} ${t.avance}%`,resp:'',compromiso:'',hecho:false,creado:new Date().toISOString(),auto:true});
+  }
+});
+$('#task-del').onclick=()=>{ if(editingTask && confirm('¿Eliminar esta actividad? Las entradas de bitácora ligadas se conservan.')){ store.delTask(editingTask); dlgT.close(); toast('Eliminado'); } };
+
+/* ---------- log dialog ---------- */
+const dlgL=$('#dlg-log'), formL=$('#form-log');
+let editingLog=null;
+function openLog(id, preset={}){
+  const e=id?S.log[id]:null; editingLog=id||null;
+  $('#dlg-log-title').textContent=e?'Editar entrada':'Nueva entrada de bitácora';
+  formL.tareaId.innerHTML='<option value="">—</option>'+ordered().filter(t=>t.tipo!=='fase').map(t=>`<option value="${t.id}">${esc(t.nombre)}</option>`).join('');
+  formL.fecha.value=e?.fecha||todayISO(); formL.tipo.value=e?.tipo||preset.tipo||'avance'; formL.autor.value=e?.autor||(function(){try{return localStorage.getItem(LS_KEY+'-autor')||''}catch(_){return ''}})();
+  formL.tareaId.value=e?.tareaId||preset.tareaId||''; formL.texto.value=e?.texto||''; formL.resp.value=e?.resp||''; formL.compromiso.value=e?.compromiso||'';
+  $('#log-del').style.display=e?'':'none';
+  dlgL.showModal();
+}
+formL.addEventListener('submit',e=>{
+  if(e.submitter && e.submitter.value!=='ok') return;
+  const prev=editingLog?S.log[editingLog]:null;
+  const en={ id:editingLog||uid(), fecha:formL.fecha.value, tipo:formL.tipo.value, autor:formL.autor.value.trim(), tareaId:formL.tareaId.value||'', texto:formL.texto.value.trim(), resp:formL.resp.value.trim(), compromiso:formL.compromiso.value||'', hecho:prev?.hecho||false, creado:prev?.creado||new Date().toISOString() };
+  try{ localStorage.setItem(LS_KEY+'-autor',en.autor); }catch(_){}
+  store.setLog(en); toast('Registrado');
+});
+$('#log-del').onclick=()=>{ if(editingLog && confirm('¿Eliminar esta entrada?')){ store.delLog(editingLog); dlgL.close(); } };
+
+/* ---------- import / export ---------- */
+const dlgIO=$('#dlg-io'), formIO=$('#form-io');
+function openIO(mode){
+  $('#dlg-io-title').textContent=mode==='export'?'Exportar proyecto':'Importar proyecto';
+  formIO.json.value=mode==='export'?JSON.stringify({meta:S.meta,tasks:S.tasks,log:S.log},null,2):'';
+  formIO.json.readOnly=mode==='export';
+  $('#io-ok').style.display=mode==='export'?'none':'';
+  $('#io-hint').textContent=mode==='export'?'Copia este JSON como respaldo o para llevarlo a otra copia del tablero.':'Pega un JSON exportado desde este tablero. Reemplaza todo el plan y la bitácora.';
+  dlgIO.showModal();
+  if(mode==='export'){ formIO.json.select(); try{ navigator.clipboard.writeText(formIO.json.value).then(()=>toast('Copiado al portapapeles')); }catch(_){} }
+}
+formIO.addEventListener('submit',e=>{
+  if(e.submitter && e.submitter.value!=='ok') return;
+  try{ const o=JSON.parse(formIO.json.value); if(!o.tasks) throw new Error('sin tareas'); if(!confirm('Esto reemplaza el plan y la bitácora actuales para todos. ¿Continuar?')){ e.preventDefault(); return; } store.replaceAll({meta:{...S.meta,...(o.meta||{})},tasks:o.tasks||{},log:o.log||{}}); toast('Importado'); }
+  catch(x){ e.preventDefault(); $('#io-hint').textContent='El JSON no es válido: '+x.message; }
+});
+
+/* ---------- reorder ---------- */
+function move(id,dir){
+  const t=S.tasks[id]; if(!t) return;
+  const sib=Object.values(S.tasks).filter(x=>x.tipo===t.tipo && (t.tipo==='fase' || x.fase===t.fase)).sort((a,b)=>(a.orden||0)-(b.orden||0));
+  const i=sib.findIndex(x=>x.id===id); const j=i+dir; if(j<0||j>=sib.length) return;
+  // normalize orders within the group, then swap
+  sib.forEach((x,k)=>x.orden=(t.tipo==='fase'?(k+1)*10:(sib[0].fase?(S.tasks[sib[0].fase]?.orden||0):0)+k+1));
+  const a=sib[i].orden; sib[i].orden=sib[j].orden; sib[j].orden=a;
+  store.setTask({...sib[i]}); store.setTask({...sib[j]});
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');
+  if(b){
+    const act=b.dataset.act, id=b.dataset.id;
+    if(act==='new-task') openTask(null,false);
+    else if(act==='new-phase') openTask(null,true);
+    else if(act==='edit') openTask(id);
+    else if(act==='up') move(id,-1);
+    else if(act==='down') move(id,1);
+    else if(act==='new-log') openLog(null);
+    else if(act==='edit-log') openLog(id);
+    else if(act==='export') openIO('export');
+    else if(act==='download') downloadHTML();
+    else if(act==='import') openIO('import');
+    else if(act==='toggle'){ const en=S.log[id]; if(en) store.setLog({...en,hecho:b.checked,cerrado:b.checked?todayISO():''}); }
+    return;
+  }
+  const bar=e.target.closest('.gantt .bar[data-id]'); if(bar && bar.dataset.id){ openTask(bar.dataset.id); return; }
+  const tab=e.target.closest('.tab'); if(tab){ $$('.tab').forEach(x=>x.setAttribute('aria-selected',x===tab)); $$('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+tab.dataset.tab)); try{ localStorage.setItem(LS_KEY+'-tab',tab.dataset.tab); }catch(_){} }
+});
+['#f-status','#f-resp'].forEach(s=>$(s).addEventListener('input',renderPlan));
+$('#f-logtype').addEventListener('change',renderLog);
+try{ const t=localStorage.getItem(LS_KEY+'-tab'); if(t){ const b=$(`.tab[data-tab="${t}"]`); if(b) b.click(); } }catch(_){}
+
+render();
+connect();
+})();
+</script>
+</body></html>
