@@ -165,6 +165,13 @@ label.f textarea{min-height:80px;resize:vertical}
 /* read-only view */
 body.ro [data-act="new-task"],body.ro [data-act="new-phase"],body.ro [data-act="new-log"],body.ro [data-act="import"],body.ro [data-act="edit"],body.ro [data-act="edit-log"],body.ro [data-act="up"],body.ro [data-act="down"],body.ro .steps input[type=checkbox]{display:none!important}
 body.ro .gantt .bar{cursor:default}
+body.client [data-act="export"],body.client [data-act="import"],body.client [data-act="download"]{display:none!important}
+.kpi.clickable{cursor:pointer;border:1px solid transparent}.kpi.clickable:hover{border-color:var(--gold)}
+.detail{list-style:none;margin:0;padding:0;max-height:60vh;overflow:auto}
+.detail li{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.detail li:first-child{border-top:0}
+.detail .tx{flex:1}.detail .tx small{display:block;color:var(--muted);font-size:12px}
+.detail .due{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
 .conn.ro i{background:var(--navy)} .conn.saving i{background:var(--gold)}
 </style>
 </head><body><div id="root"></div>
@@ -232,7 +239,7 @@ const MARKUP = `<header class="top">
   <section class="panel" id="p-log">
     <div class="two">
       <div class="card">
-        <h2>Bitácora <span class="cnt" id="log-cnt"></span><span class="grow" style="flex:1"></span><button class="btn primary sm" data-act="new-log">+ Entrada</button></h2>
+        <h2>Bitácora <span class="cnt" id="log-cnt"></span><span class="grow" style="flex:1"></span><button class="btn sm" data-act="new-step">+ Siguiente paso</button><button class="btn primary sm" data-act="new-log">+ Entrada</button></h2>
         <div class="toolbar" style="margin-bottom:6px">
           <select class="btn" id="f-logtype"><option value="">Todo</option><option value="avance">Avances</option><option value="decision">Decisiones</option><option value="riesgo">Riesgos</option><option value="paso">Siguientes pasos</option><option value="nota">Notas</option></select>
         </div>
@@ -306,6 +313,14 @@ const MARKUP = `<header class="top">
   </form>
 </dialog>
 
+<dialog id="dlg-detail">
+  <form method="dialog">
+    <h2 id="dlg-detail-title">Detalle</h2>
+    <ul class="detail" id="detail"></ul>
+    <div class="actions"><button class="btn">Cerrar</button></div>
+  </form>
+</dialog>
+
 <div class="toast" id="toast"></div>`;
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
@@ -335,14 +350,10 @@ document.getElementById('root').innerHTML = MARKUP;
 (function loadState(){
   try{ const el=document.getElementById('state'); if(el && el.textContent.trim()){ const o=JSON.parse(el.textContent); Object.assign(S.meta,o.meta||{}); S.tasks=o.tasks||{}; S.log=o.log||{}; } }catch(e){ console.error('estado ilegible',e); }
 })();
-// Hosted copy (GitHub Pages): live data comes from data.json next to this file; the embedded state is the fallback.
-(async function loadRemote(){
-  if(window.claude && window.claude.use) return;           // inside the Claude viewer the page itself is the record
-  try{ const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return; const o=await r.json();
-    if(o && o.tasks){ Object.assign(S.meta,o.meta||{}); S.tasks=o.tasks||{}; S.log=o.log||{}; render(); } }catch(_){}
-})();
 const LS_KEY = 'cien-bitrix-tablero-v2';
 let artifact=null, downloads=null, readOnly=false, publishT=null, dirty=false;
+let API=null, apiQueue=[], apiT=null, apiBusy=false, pollT=null;
+const inClaude = !!(window.claude && window.claude.use);
 
 function serialize(){ return JSON.stringify({meta:S.meta,tasks:S.tasks,log:S.log}).replace(/<\//g,'<\\/'); }
 function buildHTML(){
@@ -356,20 +367,30 @@ function buildHTML(){
     +'<script id="app">'+app+T+'\n</body></html>';
 }
 function setConn(cls,txt){ const c=$('#conn'); c.className='conn '+cls; c.lastElementChild.textContent=txt; }
-function enterReadOnly(msg){
-  readOnly=true; document.body.classList.add('ro');
-  setConn('ro', msg||'solo lectura');
+function enterReadOnly(msg){ readOnly=true; document.body.classList.add('ro'); setConn('ro', msg||'solo lectura'); }
+function applyState(o){ if(!o||!o.tasks) return; const api=S.meta.api; S.meta=Object.assign({},o.meta||{}); if(api&&!S.meta.api) S.meta.api=api; S.tasks=o.tasks||{}; S.log=o.log||{}; render(); }
+
+/* --- shared backend (Apps Script web app): meta.api --- */
+async function apiGet(){ const r=await fetch(API+'?t='+Date.now(),{cache:'no-store',redirect:'follow'}); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
+function apiSend(op){ apiQueue.push(op); setConn('saving','guardando…'); clearTimeout(apiT); apiT=setTimeout(apiFlush,500); }
+async function apiFlush(){
+  if(apiBusy||!apiQueue.length) return; apiBusy=true; const ops=apiQueue.splice(0);
+  try{ const r=await fetch(API,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({ops})}); if(!r.ok) throw new Error('HTTP '+r.status);
+    const o=await r.json(); if(!apiQueue.length) applyState(o); setConn('live','guardado · compartido'); }
+  catch(e){ console.error(e); apiQueue.unshift(...ops); setConn('local','sin conexión · reintentando'); setTimeout(apiFlush,5000); }
+  finally{ apiBusy=false; if(apiQueue.length) apiFlush(); }
 }
+async function apiPoll(){ if(apiBusy||apiQueue.length) return; try{ applyState(await apiGet()); }catch(_){} }
+
 function schedulePublish(){
   dirty=true; S.meta.actualizado=new Date().toISOString();
+  if(API){ return; }
   if(readOnly || !artifact){ setConn('local','cambios sin guardar (vista sin permiso de edición)'); return; }
   setConn('saving','guardando…');
   clearTimeout(publishT);
   publishT=setTimeout(async()=>{
-    try{
-      await artifact.publish(buildHTML());
-      dirty=false; setConn('live','guardado · recargando');
-    }catch(e){
+    try{ await artifact.publish(buildHTML()); dirty=false; setConn('live','guardado · recargando'); }
+    catch(e){
       const code=e&&e.code;
       if(code==='not_writer'||code==='not_granted'){ enterReadOnly('solo lectura · tus cambios no se guardan'); toast('Esta vista es de solo lectura'); }
       else if(code==='conflict'){ setConn('live','otra persona guardó · recargando'); }
@@ -379,12 +400,13 @@ function schedulePublish(){
   },1200);
 }
 const store = {
-  async setTask(t){ S.tasks[t.id]=t; render(); schedulePublish(); },
-  async delTask(id){ delete S.tasks[id]; Object.values(S.tasks).forEach(t=>{ if(t.fase===id) t.fase=null; }); render(); schedulePublish(); },
-  async setLog(e){ S.log[e.id]=e; render(); schedulePublish(); },
-  async delLog(id){ delete S.log[id]; render(); schedulePublish(); },
-  async setMeta(m){ Object.assign(S.meta,m); render(); schedulePublish(); },
-  async replaceAll(data){ Object.assign(S.meta,data.meta); S.tasks=data.tasks; S.log=data.log; render(); schedulePublish(); }
+  async setTask(t){ S.tasks[t.id]=t; render(); schedulePublish(); if(API) apiSend({op:'set',coll:'tasks',id:t.id,data:t}); },
+  async delTask(id){ delete S.tasks[id]; const orphans=[]; Object.values(S.tasks).forEach(t=>{ if(t.fase===id){ t.fase=null; orphans.push(t); } }); render(); schedulePublish(); if(API){ apiSend({op:'del',coll:'tasks',id}); orphans.forEach(t=>apiSend({op:'set',coll:'tasks',id:t.id,data:t})); } },
+  async setLog(e){ S.log[e.id]=e; render(); schedulePublish(); if(API) apiSend({op:'set',coll:'log',id:e.id,data:e}); },
+  async delLog(id){ delete S.log[id]; render(); schedulePublish(); if(API) apiSend({op:'del',coll:'log',id}); },
+  async setMeta(m){ Object.assign(S.meta,m); render(); schedulePublish(); if(API) apiSend({op:'set',coll:'meta',id:'meta',data:S.meta}); },
+  async replaceAll(data){ Object.assign(S.meta,data.meta); S.tasks=data.tasks; S.log=data.log; render(); schedulePublish();
+    if(API){ Object.values(S.tasks).forEach(t=>apiSend({op:'set',coll:'tasks',id:t.id,data:t})); Object.values(S.log).forEach(e=>apiSend({op:'set',coll:'log',id:e.id,data:e})); apiSend({op:'set',coll:'meta',id:'meta',data:S.meta}); } }
 };
 async function downloadHTML(){
   const html=buildHTML(); const name='tablero-bitrix24-cien.html';
@@ -393,10 +415,24 @@ async function downloadHTML(){
 }
 
 async function connect(){
-  if(!(window.claude && window.claude.use)){ enterReadOnly('vista publicada · solo lectura'); return; }
-  [artifact,downloads]=await Promise.all([window.claude.use('artifact'), window.claude.use('downloads')]);
-  if(!artifact){ enterReadOnly('vista publicada · solo lectura'); return; }
-  setConn('live','edición en vivo · los cambios se publican solos');
+  if(inClaude){
+    [artifact,downloads]=await Promise.all([window.claude.use('artifact'), window.claude.use('downloads')]);
+    if(!artifact){ enterReadOnly('vista publicada · solo lectura'); return; }
+    setConn('live','edición en vivo · los cambios se publican solos'); return;
+  }
+  // Hosted copy (GitHub Pages): data.json carries the current state and, optionally, meta.api (shared backend).
+  document.body.classList.add('client');
+  let remote=null;
+  try{ const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'}); if(r.ok) remote=await r.json(); }catch(_){}
+  if(remote && remote.tasks) applyState(remote);
+  API = (S.meta && S.meta.api) || (remote && remote.meta && remote.meta.api) || null;
+  if(!API){ enterReadOnly('vista publicada · solo lectura'); return; }
+  setConn('saving','conectando…');
+  try{ const o=await apiGet(); if(o && o.tasks && Object.keys(o.tasks).length){ applyState(o); } else { /* empty backend: seed it with what we have */ store.replaceAll({meta:S.meta,tasks:S.tasks,log:S.log}); }
+    setConn('live','edición compartida · los cambios se guardan para todos'); }
+  catch(e){ console.error(e); enterReadOnly('sin conexión con el servidor · solo lectura'); return; }
+  pollT=setInterval(apiPoll,30000);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) apiPoll(); });
 }
 
 
@@ -433,13 +469,13 @@ function renderKpis(){
   const late=tasks.filter(t=>t.estatus!=='hecho' && t.fin<todayISO()).length;
   const steps=Object.values(S.log).filter(e=>e.tipo==='paso'&&!e.hecho).length;
   $('#kpis').innerHTML=[
-    ['S'+wk,'semana del plan · '+fmtD(todayISO())],
-    [avg+'%','avance global'],
-    [done+'/'+n,'actividades completadas'],
-    [run,'en curso'],
-    [late,'vencidas'],
-    [steps,'pasos abiertos'],
-  ].map(([v,l],i)=>`<div class="kpi"><div class="v" style="${i===4&&late?'color:var(--bad)':''}${i===0?'color:var(--navy)':''}">${v}</div><div class="l">${l}</div></div>`).join('');
+    ['S'+wk,'semana del plan · '+fmtD(todayISO()),'',false],
+    [avg+'%','avance global','',false],
+    [done+'/'+n,'actividades completadas','hecho',true],
+    [run,'en curso','curso',true],
+    [late,'vencidas','vencidas',true],
+    [steps,'pasos abiertos','pasos',true],
+  ].concat(blk?[[blk,'bloqueadas','bloqueado',true]]:[]).map(([v,l,k,c])=>`<div class="kpi ${c?'clickable':''}" ${c?`data-act="kpi" data-k="${k}" role="button" tabindex="0"`:''}><div class="v" style="${k==='vencidas'&&v?'color:var(--bad)':''}${k===''&&l.startsWith('semana')?'color:var(--navy)':''}${k==='bloqueado'?'color:var(--bad)':''}">${v}</div><div class="l">${l}</div></div>`).join('');
   $('#title').textContent=S.meta.nombre||'Tablero de proyecto Bitrix24';
   const u=S.meta.actualizado; $('#updated').textContent=u?('Última actualización: '+new Date(u).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'})):'';
 }
@@ -589,6 +625,22 @@ formIO.addEventListener('submit',e=>{
   catch(x){ e.preventDefault(); $('#io-hint').textContent='El JSON no es válido: '+x.message; }
 });
 
+/* ---------- KPI detail ---------- */
+function openDetail(k){
+  const tasks=Object.values(S.tasks).filter(t=>t.tipo!=='fase');
+  let title='', items=[];
+  const T=t=>({id:t.id,kind:'task',tx:t.nombre,sub:(t.resp||'—')+(S.tasks[t.fase]?' · '+S.tasks[t.fase].nombre:''),due:fmtD(t.inicio)+' → '+fmtD(t.fin),chip:`<span class="chip s-${t.estatus}">${STATUS[t.estatus]} ${t.avance||0}%</span>`});
+  if(k==='curso'){ title='Actividades en curso'; items=tasks.filter(t=>t.estatus==='curso').map(T); }
+  else if(k==='hecho'){ title='Actividades completadas'; items=tasks.filter(t=>t.estatus==='hecho').map(T); }
+  else if(k==='bloqueado'){ title='Actividades bloqueadas'; items=tasks.filter(t=>t.estatus==='bloqueado').map(T); }
+  else if(k==='vencidas'){ title='Actividades vencidas (fecha fin pasada y no completadas)'; items=tasks.filter(t=>t.estatus!=='hecho'&&t.fin<todayISO()).sort((a,b)=>a.fin.localeCompare(b.fin)).map(T); }
+  else if(k==='pasos'){ title='Siguientes pasos abiertos'; items=Object.values(S.log).filter(e=>e.tipo==='paso'&&!e.hecho).sort((a,b)=>(a.compromiso||'9').localeCompare(b.compromiso||'9')).map(e=>({id:e.id,kind:'log',tx:e.texto,sub:(e.resp||'')+(e.tareaId&&S.tasks[e.tareaId]?' · '+S.tasks[e.tareaId].nombre:''),due:e.compromiso?'compromiso '+fmtD(e.compromiso):'',chip:e.compromiso&&e.compromiso<todayISO()?'<span class="chip s-bloqueado">vencido</span>':''})); }
+  $('#dlg-detail-title').textContent=title+` (${items.length})`;
+  $('#detail').innerHTML=items.length?items.map(i=>`<li>${i.chip}<div class="tx">${esc(i.tx)}<small>${esc(i.sub)}</small></div><span class="due">${i.due}</span>${readOnly?'':`<button type="button" class="btn sm" data-act="${i.kind==='task'?'edit':'edit-log'}" data-id="${i.id}" data-close="1">Editar</button>`}</li>`).join('')
+    :'<li><div class="empty" style="flex:1">Nada por aquí.</div></li>';
+  $('#dlg-detail').showModal();
+}
+
 /* ---------- reorder ---------- */
 function move(id,dir){
   const t=S.tasks[id]; if(!t) return;
@@ -605,7 +657,10 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');
   if(b){
     const act=b.dataset.act, id=b.dataset.id;
-    if(act==='new-task') openTask(null,false);
+    if(b.dataset.close) $('#dlg-detail').close();
+    if(act==='kpi') openDetail(b.dataset.k);
+    else if(act==='new-step') openLog(null,{tipo:'paso'});
+    else if(act==='new-task') openTask(null,false);
     else if(act==='new-phase') openTask(null,true);
     else if(act==='edit') openTask(id);
     else if(act==='up') move(id,-1);
@@ -621,6 +676,7 @@ document.addEventListener('click',e=>{
   const bar=e.target.closest('.gantt .bar[data-id]'); if(bar && bar.dataset.id){ openTask(bar.dataset.id); return; }
   const tab=e.target.closest('.tab'); if(tab){ $$('.tab').forEach(x=>x.setAttribute('aria-selected',x===tab)); $$('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+tab.dataset.tab)); try{ localStorage.setItem(LS_KEY+'-tab',tab.dataset.tab); }catch(_){} }
 });
+document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.matches('.kpi[data-act="kpi"]')){ e.preventDefault(); openDetail(e.target.dataset.k); } });
 ['#f-status','#f-resp'].forEach(s=>$(s).addEventListener('input',renderPlan));
 $('#f-logtype').addEventListener('change',renderLog);
 try{ const t=localStorage.getItem(LS_KEY+'-tab'); if(t){ const b=$(`.tab[data-tab="${t}"]`); if(b) b.click(); } }catch(_){}

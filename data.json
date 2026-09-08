@@ -3,7 +3,8 @@
   "inicio": "2026-08-03",
   "semanas": 25,
   "nombre": "Tablero de proyecto Bitrix24",
-  "actualizado": "2026-09-08T12:40:00.000Z"
+  "actualizado": "2026-09-08T12:40:00.000Z",
+  "api": "https://script.google.com/macros/s/AKfycby4WkDCPU-eGfnnNUOKezEQgS49TL_gNj08uxZVggSEy3bDlAMHlEWlbF5aDcozoju7/exec"
  },
  "tasks": {
   "f1": {
