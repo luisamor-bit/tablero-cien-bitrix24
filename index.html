@@ -1,31 +1,31 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tablero Bitrix24 CIEN</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style id="css">
 :root{
-  --bg:#F2F3F6; --surface:#FFFFFF; --surface2:#E9EBF0; --line:#D6D9E1; --line2:#C3C7D2;
-  --text:#1B2435; --muted:#66708A; --faint:#9AA2B5;
-  --navy:#1F3864; --navy2:#2C4A80; --gold:#B8892B; --gold-soft:#F4EBD6;
-  --ok:#2E8B57; --ok-soft:#DDF1E4; --run:#2F6DB5; --run-soft:#DCE8F7; --warn:#D08A12; --warn-soft:#FBEBD0; --bad:#C0392B; --bad-soft:#F8DAD6; --pend:#9AA2B5; --pend-soft:#E9EBF0;
-  --today:#C0392B; --shadow:0 6px 24px rgba(27,36,53,.12);
-  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  --cond:"IBM Plex Sans Condensed","IBM Plex Sans",system-ui,sans-serif;
+  --bg:#F5F4F9; --surface:#FFFFFF; --surface2:#ECEAF3; --line:#DCD9E6; --line2:#C9C5D8;
+  --text:#2A2450; --muted:#6B6785; --faint:#9E9AB5;
+  --navy:#3B347C; --navy2:#9A238F; --gold:#F7941D; --gold-soft:#FDEBD6;
+  --ok:#31B34A; --ok-soft:#DFF4E3; --run:#137CC2; --run-soft:#DCEBF7; --warn:#F7941D; --warn-soft:#FDEBD6; --bad:#D6404B; --bad-soft:#FADDE0; --pend:#9E9AB5; --pend-soft:#ECEAF3;
+  --today:#9A238F; --shadow:0 6px 24px rgba(59,52,124,.12);
+  --sans:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --cond:"Open Sans","Inter",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#12171F; --surface:#1A212C; --surface2:#222B38; --line:#2F3A4A; --line2:#3C485B;
-  --text:#E8ECF3; --muted:#A3ADC0; --faint:#6B778C;
-  --navy:#8FB0E8; --navy2:#6F93D0; --gold:#D9AE55; --gold-soft:#3A3120;
-  --ok:#5CC08A; --ok-soft:#1E3A2B; --run:#6FA3E8; --run-soft:#1F3352; --warn:#E6A83C; --warn-soft:#3F3218; --bad:#E5705F; --bad-soft:#4A2521; --pend:#7D889C; --pend-soft:#2A3341;
-  --today:#E5705F; --shadow:0 6px 24px rgba(0,0,0,.45);
+  --bg:#15121F; --surface:#1E1A2C; --surface2:#28233A; --line:#372F4D; --line2:#463D60;
+  --text:#EDEAF6; --muted:#ABA5C4; --faint:#6F6890;
+  --navy:#B8B0F0; --navy2:#E08BD8; --gold:#F9AE55; --gold-soft:#3F2E18;
+  --ok:#5FCB74; --ok-soft:#1E3A26; --run:#5FAEE8; --run-soft:#1E3350; --warn:#F9AE55; --warn-soft:#3F2E18; --bad:#EF7A82; --bad-soft:#4A2328; --pend:#7F7A9A; --pend-soft:#2C2740;
+  --today:#E08BD8; --shadow:0 6px 24px rgba(0,0,0,.45);
 }}
 :root[data-theme="dark"]{
-  --bg:#12171F; --surface:#1A212C; --surface2:#222B38; --line:#2F3A4A; --line2:#3C485B;
-  --text:#E8ECF3; --muted:#A3ADC0; --faint:#6B778C;
-  --navy:#8FB0E8; --navy2:#6F93D0; --gold:#D9AE55; --gold-soft:#3A3120;
-  --ok:#5CC08A; --ok-soft:#1E3A2B; --run:#6FA3E8; --run-soft:#1F3352; --warn:#E6A83C; --warn-soft:#3F3218; --bad:#E5705F; --bad-soft:#4A2521; --pend:#7D889C; --pend-soft:#2A3341;
-  --today:#E5705F; --shadow:0 6px 24px rgba(0,0,0,.45);
+  --bg:#15121F; --surface:#1E1A2C; --surface2:#28233A; --line:#372F4D; --line2:#463D60;
+  --text:#EDEAF6; --muted:#ABA5C4; --faint:#6F6890;
+  --navy:#B8B0F0; --navy2:#E08BD8; --gold:#F9AE55; --gold-soft:#3F2E18;
+  --ok:#5FCB74; --ok-soft:#1E3A26; --run:#5FAEE8; --run-soft:#1E3350; --warn:#F9AE55; --warn-soft:#3F2E18; --bad:#EF7A82; --bad-soft:#4A2328; --pend:#7F7A9A; --pend-soft:#2C2740;
+  --today:#E08BD8; --shadow:0 6px 24px rgba(0,0,0,.45);
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45}
@@ -66,7 +66,9 @@ h1,h2,h3{margin:0;font-family:var(--cond);text-wrap:balance}
 .ruta .goal b{color:var(--navy);font-weight:600}
 .kpi{position:relative}
 @media (prefers-reduced-motion: reduce){.obra .crane-cab,.ruta .marker svg{animation:none}}
-.brand h1{font-size:26px;font-weight:700;color:var(--navy);line-height:1.1}
+.brand h1{font-size:26px;font-weight:800;color:var(--navy);line-height:1.1}
+.brand .logo{height:38px;width:auto;display:block;margin-bottom:10px}
+.eyebrow b{color:var(--navy2);font-weight:600}
 .brand .sub{color:var(--muted);margin-top:4px}
 .kpis{display:flex;gap:10px;flex-wrap:wrap}
 .kpi{background:var(--surface2);border-radius:8px;padding:8px 14px;min-width:120px}
@@ -74,7 +76,7 @@ h1,h2,h3{margin:0;font-family:var(--cond);text-wrap:balance}
 .kpi .l{font-size:11px;color:var(--muted);margin-top:2px}
 .tabs{max-width:1400px;margin:0 auto;padding:14px 24px 0;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
 .tab{border:0;background:transparent;padding:8px 14px;border-radius:8px 8px 0 0;color:var(--muted);font-weight:500;border-bottom:2px solid transparent}
-.tab[aria-selected="true"]{color:var(--navy);border-bottom-color:var(--gold);background:var(--bg)}
+.tab[aria-selected="true"]{color:var(--navy);border-bottom-color:var(--navy2);background:var(--bg)}
 .tabs .spacer{flex:1}
 .conn{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;padding-bottom:6px}
 .conn i{width:8px;height:8px;border-radius:50%;background:var(--pend);display:inline-block}
@@ -85,11 +87,10 @@ main{max-width:1400px;margin:0 auto;padding:20px 24px 60px}
 .panel{display:none}.panel.on{display:block}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 .toolbar .grow{flex:1}
-.btn{border:1px solid var(--line2);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
 .btn:hover{border-color:var(--navy2)}
-.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
-:root[data-theme="dark"] .btn.primary{color:#0F1622}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#0F1622}}
+.btn.primary{background:linear-gradient(135deg,var(--navy),var(--navy2));border-color:transparent;color:#fff;border-radius:999px}
+.btn.primary:hover{filter:brightness(1.08)}
 .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
 .btn.sm{padding:3px 8px;font-size:12px;border-radius:6px}
 .btn.icon{padding:3px 6px;font-size:12px;line-height:1;border-radius:6px}
@@ -192,7 +193,7 @@ label.f input,label.f select,label.f textarea{border:1px solid var(--line2);back
 label.f textarea{min-height:80px;resize:vertical}
 .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;align-items:center}
 .actions .danger{margin-right:auto;color:var(--bad);border-color:transparent;background:transparent}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
 .toast.on{opacity:1}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 @media print{.tabs,.toolbar,.btn,.conn{display:none!important}.panel{display:block!important;page-break-inside:avoid}.gwrap,.tbl,.card{box-shadow:none}}
@@ -217,7 +218,8 @@ body.client [data-act="export"],body.client [data-act="import"],body.client [dat
 const MARKUP = `<header class="top">
   <div class="top-in">
     <div class="brand">
-      <div class="eyebrow">CIEN Grupo Inmobiliario · Implementación Bitrix24 · WeCollab</div>
+      <img class="logo" src="logo-wecollab.png" alt="WeCollab" onerror="this.style.display='none'">
+      <div class="eyebrow">CIEN Grupo Inmobiliario · Implementación Bitrix24 · <b>by WeCollab</b></div>
       <h1 id="title">Tablero de proyecto Bitrix24</h1>
       <div class="sub" id="subtitle">Plan maestro v6 (F. Quiroga, 4-sep-2026) · gestión de avances, siguientes pasos y bitácora</div>
       <div class="hint" id="updated"></div>
@@ -402,7 +404,7 @@ function buildHTML(){
   const app=document.getElementById('app').textContent;
   const T='<'+'/script>';
   return '<!doctype html>\n<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tablero Bitrix24 CIEN</title>'
-    +'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">'
+    +'<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">'
     +'<style id="css">'+css+'</style></head><body><div id="root"></div>\n'
     +'<script id="state" type="application/json">'+serialize()+T+'\n'
     +'<script id="app">'+app+T+'\n</body></html>';
