@@ -153,7 +153,10 @@ dialog{border:0;border-radius:12px;padding:0;background:var(--surface);color:var
 dialog::backdrop{background:rgba(15,20,30,.55)}
 dialog form{padding:20px 22px}
 dialog h2{font-size:18px;color:var(--navy);margin-bottom:14px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.grid>*{min-width:0}
+label.f input,label.f select,label.f textarea{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+dialog{overflow-x:hidden}
 .grid .full{grid-column:1/-1}
 @media (max-width:600px){.grid{grid-template-columns:1fr}dialog{width:96vw}dialog form{padding:14px}}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
