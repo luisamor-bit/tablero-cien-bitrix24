@@ -272,6 +272,56 @@ figure.dg figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
 .dg-futtxt{fill:var(--gold);font-size:12px;font-weight:600;text-anchor:middle}
 .dg-cuttxt{fill:var(--bad);font-size:11.5px;font-weight:500}
 @media print{details.doc{break-inside:avoid}}
+/* ---------- dependencias de CIEN ---------- */
+.tab .tabcnt{display:inline-block;min-width:18px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--bad);color:var(--surface);font-size:11px;font-weight:600;line-height:18px;text-align:center}
+.tab .tabcnt:empty{display:none}
+.dep-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:4px 0 18px}
+@media (max-width:800px){.dep-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.dep-tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow);border-top:3px solid var(--line2)}
+.dep-tile .n{font-family:var(--cond);font-size:28px;font-weight:700;color:var(--text);line-height:1.1;font-variant-numeric:tabular-nums}
+.dep-tile .l{font-size:12.5px;font-weight:600;color:var(--text);margin-top:2px}
+.dep-tile .s{font-size:12px;color:var(--muted);margin-top:4px}
+.dep-tile.k-vencida{border-top-color:var(--bad)}
+.dep-tile.k-proxima{border-top-color:var(--warn)}
+.dep-tile.k-tiempo{border-top-color:var(--run)}
+.dep-tile.k-hecho{border-top-color:var(--ok)}
+.dep-full{margin-bottom:20px}
+.dep-tbl .name{min-width:240px}
+.dep-tbl .name small.re{color:var(--warn)}
+.dep-tbl td.blq{min-width:180px}
+.dep-tbl td.blq span{display:inline-block;font-size:12px;background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;margin:2px 4px 2px 0;color:var(--text)}
+.chip.d-vencida{background:var(--bad-soft);color:var(--bad)}
+.chip.d-proxima{background:var(--warn-soft);color:var(--text)}
+.chip.d-tiempo{background:var(--run-soft);color:var(--text)}
+.chip.d-sinfecha{background:var(--pend-soft);color:var(--muted)}
+.chip.d-hecho{background:var(--ok-soft);color:var(--text)}
+.chip.d-hecho.late{background:var(--warn-soft)}
+.chip i.ic{font-style:normal;font-weight:700}
+.chip.cien{background:var(--surface2);color:var(--navy2);border:1px solid var(--line2);font-weight:600}
+.dep-legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin:0 0 10px}
+.dep-legend b{display:inline-block;width:12px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.dep-load{display:flex;flex-direction:column;gap:9px}
+.dep-load .row{display:grid;grid-template-columns:minmax(90px,140px) minmax(0,1fr) 34px;gap:10px;align-items:center;font-size:13px}
+.dep-load .who{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dep-load .bar{display:flex;gap:2px;height:14px}
+.dep-load .bar i{display:block;height:100%;border-radius:2px}
+.dep-load .bar i:first-child{border-radius:4px 2px 2px 4px}
+.dep-load .bar i:last-child{border-radius:2px 4px 4px 2px}
+.dep-load .bar i:only-child{border-radius:4px}
+.dep-load .bar i.v{background:var(--bad)}
+.dep-load .bar i.a{background:var(--run)}
+.dep-load .tot{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+.dep-imp .tx b{display:block}
+.dep-imp .slack{font-family:var(--mono);font-size:11.5px;white-space:nowrap;font-weight:600}
+.dep-imp .slack.neg{color:var(--bad)}
+.dep-imp .slack.low{color:var(--warn)}
+.dep-imp .slack.ok{color:var(--muted)}
+.wait-cien{display:inline-block;margin-left:8px;font-size:11px;font-weight:600;color:var(--bad);background:var(--bad-soft);border-radius:999px;padding:1px 8px;vertical-align:1px;white-space:nowrap}
+label.f.chk{flex-direction:row;align-items:flex-start;gap:8px;color:var(--text);font-size:13px}
+label.f.chk input{width:auto;margin-top:2px;flex:none}
+label.f.chk small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+label.f select[multiple]{min-height:96px}
+.dep-tbl .chip::before{display:none}
 
 </style>
 </head><body><div id="root"></div>
@@ -298,6 +348,7 @@ const MARKUP = `<header class="top">
     <button class="tab" role="tab" data-tab="gantt" aria-selected="true">Gantt</button>
     <button class="tab" role="tab" data-tab="plan">Plan de trabajo</button>
     <button class="tab" role="tab" data-tab="log">Bitácora y siguientes pasos</button>
+    <button class="tab" role="tab" data-tab="deps" title="Lo que Grupo CIEN debe entregar para que el proyecto avance">Dependencias CIEN<span class="tabcnt" id="deps-tab-cnt"></span></button>
     <span class="spacer"></span>
     <span class="conn" id="conn"><i></i><span>conectando…</span></span>
   </nav>
@@ -340,6 +391,36 @@ const MARKUP = `<header class="top">
       <button class="btn ghost" onclick="window.print()">Imprimir</button>
     </div>
     <div class="tblwrap"><table class="tbl" id="plan"></table></div>
+  </section>
+
+  <!-- DEPENDENCIAS CIEN -->
+  <section class="panel" id="p-deps">
+    <div class="toolbar">
+      <button class="btn primary" data-act="new-dep" title="Registra algo que Grupo CIEN debe entregar para que el proyecto avance: qué, quién, para cuándo y qué actividad del plan detiene.">+ Dependencia</button>
+      <span class="hint help">Lo que <b>Grupo CIEN</b> debe entregar para que el proyecto avance, con responsable, fecha compromiso y la actividad que detiene. Si una fecha se reprograma, el atraso se sigue contando contra la fecha original.</span>
+      <span class="grow"></span>
+      <select class="btn" id="f-deps-resp" title="Filtra por persona responsable"><option value="">Todos los responsables</option></select>
+      <label class="btn" title="Incluye en la tabla lo que ya se entregó, con su fecha real y si llegó a tiempo"><input type="checkbox" id="f-deps-done"> Mostrar entregadas</label>
+      <button class="btn ghost" onclick="window.print()">Imprimir</button>
+    </div>
+    <div class="dep-tiles" id="dep-tiles"></div>
+    <div class="card dep-full">
+      <h2>Entregables de CIEN <span class="cnt" id="dep-cnt"></span></h2>
+      <div class="tblwrap"><table class="tbl dep-tbl" id="dep-tbl"></table></div>
+    </div>
+    <div class="two">
+      <div class="card">
+        <h2>Actividades que esperan a CIEN</h2>
+        <p class="hint" style="margin:-4px 0 8px">Actividades del plan detenidas por un entregable abierto. La holgura son los días entre la entrega esperada de CIEN y la fecha fin de la actividad; si es negativa, la actividad ya no puede terminar a tiempo.</p>
+        <ul class="steps" id="dep-impact"></ul>
+      </div>
+      <div class="card">
+        <h2>Carga por responsable</h2>
+        <p class="hint" style="margin:-4px 0 8px">Entregables abiertos por persona. Aquí se ven los cuellos de botella antes de que pasen.</p>
+        <div class="dep-legend"><span><b style="background:var(--bad)"></b>Vencidas</span><span><b style="background:var(--run)"></b>Abiertas en tiempo</span></div>
+        <div class="dep-load" id="dep-load"></div>
+      </div>
+    </div>
   </section>
 
   <!-- LOG -->
@@ -404,6 +485,8 @@ const MARKUP = `<header class="top">
       <label class="f full">Detalle<textarea name="texto" required></textarea></label>
       <label class="f">Responsable (pasos / riesgos)<input name="resp"></label>
       <label class="f">Fecha compromiso<input type="date" name="compromiso"></label>
+      <label class="f full chk"><input type="checkbox" name="dep"><span><b>Dependencia de CIEN</b><small>Algo que Grupo CIEN debe entregar para que el proyecto avance. Aparece en la pestaña Dependencias CIEN, y la actividad relacionada queda marcada si se vence.</small></span></label>
+      <label class="f full" id="lbl-bloquea">También detiene a<select name="bloquea" multiple></select><small class="help">La actividad principal es la de “Actividad relacionada”. Aquí puedes marcar otras que también esperan esta entrega (Ctrl o ⌘ + clic).</small></label>
     </div>
     <div class="actions">
       <button type="button" class="btn danger" id="log-del">Eliminar</button>
@@ -571,7 +654,7 @@ function ordered(){
 function weekOf(iso){ return Math.floor(daysBetween(S.meta.inicio, iso)/7)+1; }
 
 /* ---------- render ---------- */
-function render(){ renderKpis(); renderGantt(); renderPlan(); renderLog(); }
+function render(){ renderKpis(); renderGantt(); renderPlan(); renderLog(); renderDeps(); }
 
 function renderKpis(){
   const tasks=Object.values(S.tasks).filter(t=>t.tipo!=='fase');
@@ -717,7 +800,7 @@ function renderPlan(){
     if(fr && !(t.resp||'').toLowerCase().includes(fr)) continue;
     n++;
     const late=t.estatus!=='hecho'&&t.fin<todayISO();
-    h+=`<tr data-id="${t.id}"><td class="num">${n}</td><td class="name">${esc(t.nombre)}${t.notas?`<small>${esc(t.notas)}</small>`:''}</td><td>${esc(t.resp||'—')}</td><td><span class="chip s-${t.estatus}">${STATUS[t.estatus]||t.estatus}</span></td><td><div class="prog ${t.estatus==='hecho'?'hecho':''}"><div class="bar"><i style="width:${t.estatus==='hecho'?100:(+t.avance||0)}%"></i></div><span>${t.estatus==='hecho'?100:(+t.avance||0)}%</span></div></td><td class="num">${fmtD(t.inicio)}</td><td class="num" style="${late?'color:var(--bad);font-weight:500':''}">${fmtD(t.fin)}</td><td class="num">S${weekOf(t.inicio)}${weekOf(t.fin)!==weekOf(t.inicio)?'–S'+weekOf(t.fin):''}</td><td class="act"><button class="btn icon" data-act="up" data-id="${t.id}" title="Subir">↑</button><button class="btn icon" data-act="down" data-id="${t.id}" title="Bajar">↓</button><button class="btn sm" data-act="edit" data-id="${t.id}">Editar</button></td></tr>`;
+    h+=`<tr data-id="${t.id}"><td class="num">${n}</td><td class="name">${esc(t.nombre)}${depBadge(t.id)}${t.notas?`<small>${esc(t.notas)}</small>`:''}</td><td>${esc(t.resp||'—')}</td><td><span class="chip s-${t.estatus}">${STATUS[t.estatus]||t.estatus}</span></td><td><div class="prog ${t.estatus==='hecho'?'hecho':''}"><div class="bar"><i style="width:${t.estatus==='hecho'?100:(+t.avance||0)}%"></i></div><span>${t.estatus==='hecho'?100:(+t.avance||0)}%</span></div></td><td class="num">${fmtD(t.inicio)}</td><td class="num" style="${late?'color:var(--bad);font-weight:500':''}">${fmtD(t.fin)}</td><td class="num">S${weekOf(t.inicio)}${weekOf(t.fin)!==weekOf(t.inicio)?'–S'+weekOf(t.fin):''}</td><td class="act"><button class="btn icon" data-act="up" data-id="${t.id}" title="Subir">↑</button><button class="btn icon" data-act="down" data-id="${t.id}" title="Bajar">↓</button><button class="btn sm" data-act="edit" data-id="${t.id}">Editar</button></td></tr>`;
   }
   h+='</tbody>';
   $('#plan').innerHTML=h;
@@ -730,7 +813,7 @@ function renderLog(){
   $('#log-cnt').textContent=`${list.length} entradas`;
   $('#log').innerHTML=list.length?list.map(e=>`<li data-id="${e.id}">
       <div class="d"><b>${fmtD(e.fecha)}</b>${(e.fecha||'').slice(0,4)}</div>
-      <div><div class="meta"><span class="chip t-${e.tipo}">${TIPO[e.tipo]||e.tipo}</span>${e.tareaId&&S.tasks[e.tareaId]?`<span class="task">${esc(S.tasks[e.tareaId].nombre)}</span>`:''}${e.autor?`<span class="who">${esc(e.autor)}</span>`:''}${e.resp?`<span class="who">→ ${esc(e.resp)}</span>`:''}${e.compromiso?`<span class="who">compromiso ${fmtD(e.compromiso)}</span>`:''}${e.hecho?`<span class="chip s-hecho">cerrado</span>`:''}</div><div class="tx">${esc(e.texto)}</div></div>
+      <div><div class="meta"><span class="chip t-${e.tipo}">${TIPO[e.tipo]||e.tipo}</span>${e.dep?'<span class="chip cien" title="Dependencia de CIEN">CIEN</span>':''}${e.tareaId&&S.tasks[e.tareaId]?`<span class="task">${esc(S.tasks[e.tareaId].nombre)}</span>`:''}${e.autor?`<span class="who">${esc(e.autor)}</span>`:''}${e.resp?`<span class="who">→ ${esc(e.resp)}</span>`:''}${e.compromiso?`<span class="who">compromiso ${fmtD(e.compromiso)}</span>`:''}${e.hecho?`<span class="chip s-hecho">cerrado</span>`:''}</div><div class="tx">${esc(e.texto)}</div></div>
       <button class="btn sm ghost" data-act="edit-log" data-id="${e.id}">Editar</button></li>`).join('')
     :`<li><div class="empty" style="grid-column:1/-1">Sin entradas. Registra avances, decisiones, riesgos y siguientes pasos de cada junta.</div></li>`;
   const steps=entries.filter(e=>e.tipo==='paso').sort((a,b)=>(a.hecho-b.hecho)||(a.compromiso||'9').localeCompare(b.compromiso||'9'));
@@ -806,16 +889,25 @@ function openLog(id, preset={}){
   formL.tareaId.innerHTML='<option value="">—</option>'+ordered().filter(t=>t.tipo!=='fase').map(t=>`<option value="${t.id}">${esc(t.nombre)}</option>`).join('');
   formL.fecha.value=e?.fecha||todayISO(); formL.tipo.value=e?.tipo||preset.tipo||'avance'; formL.autor.value=e?.autor||(function(){try{return localStorage.getItem(LS_KEY+'-autor')||''}catch(_){return ''}})();
   formL.tareaId.value=e?.tareaId||preset.tareaId||''; formL.texto.value=e?.texto||''; formL.resp.value=e?.resp||''; formL.compromiso.value=e?.compromiso||'';
+  formL.dep.checked=!!(e?e.dep:preset.dep);
+  const blq=new Set(e?.bloquea||[]);
+  formL.bloquea.innerHTML=ordered().filter(t=>t.tipo!=='fase').map(t=>`<option value="${t.id}" ${blq.has(t.id)?'selected':''}>${esc(t.nombre)}</option>`).join('');
+  $('#lbl-bloquea').style.display=formL.dep.checked?'':'none';
+  if(!e&&preset.dep) $('#dlg-log-title').textContent='Nueva dependencia de CIEN';
   $('#log-del').style.display=e?'':'none';
   dlgL.showModal();
 }
 formL.addEventListener('submit',e=>{
   if(e.submitter && e.submitter.value!=='ok') return;
   const prev=editingLog?S.log[editingLog]:null;
-  const en={ id:editingLog||uid(), fecha:formL.fecha.value, tipo:formL.tipo.value, autor:formL.autor.value.trim(), tareaId:formL.tareaId.value||'', texto:formL.texto.value.trim(), resp:formL.resp.value.trim(), compromiso:formL.compromiso.value||'', hecho:prev?.hecho||false, creado:prev?.creado||new Date().toISOString() };
+  const en={ ...(prev||{}), id:editingLog||uid(), fecha:formL.fecha.value, tipo:formL.tipo.value, autor:formL.autor.value.trim(), tareaId:formL.tareaId.value||'', texto:formL.texto.value.trim(), resp:formL.resp.value.trim(), compromiso:formL.compromiso.value||'', hecho:prev?.hecho||false, creado:prev?.creado||new Date().toISOString() };
+  en.dep=formL.dep.checked;
+  en.bloquea=en.dep?[...formL.bloquea.selectedOptions].map(o=>o.value).filter(v=>v!==en.tareaId):[];
+  if(prev&&prev.compromiso&&prev.compromiso!==en.compromiso&&!prev.compromisoOriginal) en.compromisoOriginal=prev.compromiso;
   try{ localStorage.setItem(LS_KEY+'-autor',en.autor); }catch(_){}
   store.setLog(en); toast('Registrado');
 });
+formL.dep.addEventListener('change',()=>{ $('#lbl-bloquea').style.display=formL.dep.checked?'':'none'; });
 $('#log-del').onclick=()=>{ if(editingLog && confirm('¿Eliminar esta entrada?')){ store.delLog(editingLog); dlgL.close(); } };
 
 /* ---------- import / export ---------- */
@@ -875,6 +967,7 @@ document.addEventListener('click',e=>{
     else if(act==='edit') openTask(id);
     else if(act==='up') move(id,-1);
     else if(act==='down') move(id,1);
+    else if(act==='new-dep') openLog(null,{tipo:'paso',dep:true});
     else if(act==='new-log') openLog(null);
     else if(act==='edit-log') openLog(id);
     else if(act==='export') openIO('export');
@@ -889,8 +982,68 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.matches('.kpi[data-act="kpi"]')){ e.preventDefault(); openDetail(e.target.dataset.k); } });
 ['#f-status','#f-resp'].forEach(s=>$(s).addEventListener('input',renderPlan));
 $('#f-logtype').addEventListener('change',renderLog);
+['#f-deps-resp','#f-deps-done'].forEach(s=>$(s).addEventListener('change',renderDeps));
 try{ const t=localStorage.getItem(LS_KEY+'-tab'); if(t){ const b=$(`.tab[data-tab="${t}"]`); if(b) b.click(); } }catch(_){}
 
+/* ---------- dependencias de CIEN ---------- */
+function personKey(n){ const w=n.trim().split(/\s+/); return ((w[0]||'').endsWith('.')&&w[1]?w[1]:(w[0]||'')).toLowerCase(); }
+function peopleOf(resp){ return String(resp||'').split(/\s*(?:·|,|\/|;|\s+y\s+)\s*/).map(s=>s.trim()).filter(Boolean); }
+function depsAll(){ return Object.values(S.log).filter(e=>e.dep); }
+function depBlocks(e){ return [...new Set([e.tareaId,...(e.bloquea||[])].filter(id=>id&&S.tasks[id]))]; }
+function depLate(e){ const base=e.compromisoOriginal||e.compromiso; if(!base) return 0; const end=e.hecho?(e.cerrado||base):todayISO(); return Math.max(0,daysBetween(base,end)); }
+function depState(e){
+  if(e.hecho){ const l=depLate(e); return {k:'hecho',late:l,label:l?`Entregada ${fmtD(e.cerrado)} · ${l} d tarde`:`Entregada${e.cerrado?' '+fmtD(e.cerrado):''} · a tiempo`}; }
+  if(!e.compromiso) return {k:'sinfecha',late:0,label:'Sin fecha compromiso'};
+  const d=daysBetween(todayISO(),e.compromiso);
+  if(d<0) return {k:'vencida',late:-d,label:`Vencida hace ${-d} d`};
+  if(d<=14) return {k:'proxima',late:0,label:d===0?'Vence hoy':`Vence en ${d} d`};
+  return {k:'tiempo',late:0,label:'En tiempo'};
+}
+const DEP_IC={vencida:'!',proxima:'◷',tiempo:'○',sinfecha:'?',hecho:'✓'};
+function depBadge(taskId){
+  const n=depsAll().filter(e=>!e.hecho&&e.compromiso&&e.compromiso<todayISO()&&depBlocks(e).includes(taskId)).length;
+  return n?`<span class="wait-cien" title="Esta actividad espera ${n} entregable(s) vencido(s) de CIEN. Ver pestaña Dependencias CIEN.">⛓ espera a CIEN</span>`:'';
+}
+function renderDeps(){
+  if(!$('#p-deps')) return;
+  const all=depsAll(), t=todayISO();
+  const st=new Map(all.map(e=>[e.id,depState(e)]));
+  const open=all.filter(e=>!e.hecho), done=all.filter(e=>e.hecho);
+  const venc=open.filter(e=>st.get(e.id).k==='vencida'), prox=open.filter(e=>st.get(e.id).k==='proxima'), rest=open.filter(e=>['tiempo','sinfecha'].includes(st.get(e.id).k));
+  const lateOpen=venc.reduce((s,e)=>s+depLate(e),0), lateAll=all.reduce((s,e)=>s+depLate(e),0);
+  const onTime=done.filter(e=>!depLate(e)).length;
+  $('#deps-tab-cnt').textContent=venc.length||'';
+  $('#dep-tiles').innerHTML=[
+    {k:'vencida',n:venc.length,l:'Vencidas',s:venc.length?`${lateOpen} días de atraso acumulados`:'Ninguna vencida'},
+    {k:'proxima',n:prox.length,l:'Vencen en 14 días',s:prox.length?'Revisar en la junta de esta semana':'Nada por vencer'},
+    {k:'tiempo',n:rest.length,l:'Abiertas en tiempo',s:rest.filter(e=>!e.compromiso).length?`${rest.filter(e=>!e.compromiso).length} sin fecha compromiso`:'Con fecha compromiso'},
+    {k:'hecho',n:done.length,l:'Entregadas',s:done.length?`${Math.round(onTime*100/done.length)}% a tiempo · ${lateAll} días de atraso en total`:'Aún sin entregas registradas'}
+  ].map(x=>`<div class="dep-tile k-${x.k}"><div class="n">${x.n}</div><div class="l">${x.l}</div><div class="s">${x.s}</div></div>`).join('');
+  // filtro por responsable
+  const names=new Map(); all.forEach(e=>peopleOf(e.resp).forEach(p=>{ const k=personKey(p); if(!names.has(k)||p.length>names.get(k).length) names.set(k,p); }));
+  const sel=$('#f-deps-resp'), cur=sel.value;
+  sel.innerHTML='<option value="">Todos los responsables</option>'+[...names].sort((a,b)=>a[1].localeCompare(b[1])).map(([k,n])=>`<option value="${esc(k)}">${esc(n)}</option>`).join('');
+  sel.value=names.has(cur)?cur:'';
+  const fr=sel.value, showDone=$('#f-deps-done').checked;
+  const ORD={vencida:0,proxima:1,sinfecha:2,tiempo:3,hecho:4};
+  const rows=all.filter(e=>(showDone||!e.hecho)&&(!fr||peopleOf(e.resp).some(p=>personKey(p)===fr)))
+    .sort((a,b)=>(ORD[st.get(a.id).k]-ORD[st.get(b.id).k])||(b.hecho?(b.cerrado||'').localeCompare(a.cerrado||''):(a.compromiso||'9').localeCompare(b.compromiso||'9')));
+  $('#dep-cnt').textContent=`${rows.length} ${showDone?'en total':'abiertas'}`;
+  $('#dep-tbl').innerHTML=`<thead><tr><th>Qué debe entregar CIEN</th><th>Responsable</th><th>Compromiso</th><th>Estado</th><th>Detiene a</th><th></th></tr></thead><tbody>`+
+    (rows.length?rows.map(e=>{ const s=st.get(e.id); const re=e.compromisoOriginal&&e.compromisoOriginal!==e.compromiso;
+      return `<tr><td class="name">${esc(e.texto)}${re?`<small class="re">Reprogramada · fecha original ${fmtDY(e.compromisoOriginal)}${depLate(e)?` · ${depLate(e)} d de atraso contra la original`:''}</small>`:''}</td><td>${esc(e.resp||'—')}</td><td class="num">${e.compromiso?fmtDY(e.compromiso):'—'}</td><td><span class="chip d-${s.k}${s.k==='hecho'&&s.late?' late':''}"><i class="ic" aria-hidden="true">${DEP_IC[s.k]}</i>${esc(s.label)}</span></td><td class="blq">${depBlocks(e).map(id=>`<span>${esc(S.tasks[id].nombre)}</span>`).join('')||'<span class="hint">—</span>'}</td><td class="act"><button class="btn sm ghost" data-act="edit-log" data-id="${e.id}">Editar</button></td></tr>`; }).join('')
+    :`<tr><td colspan="6"><div class="empty">${all.length?'Nada con este filtro.':'Aún no hay dependencias registradas. Usa “+ Dependencia”.'}</div></td></tr>`)+'</tbody>';
+  // carga por responsable (solo abiertas)
+  const load=new Map(); open.forEach(e=>peopleOf(e.resp).forEach(p=>{ const k=personKey(p); const o=load.get(k)||{n:names.get(k)||p,v:0,a:0}; if(st.get(e.id).k==='vencida') o.v++; else o.a++; load.set(k,o); }));
+  const L=[...load.values()].sort((a,b)=>(b.v+b.a)-(a.v+a.a)||b.v-a.v); const max=Math.max(1,...L.map(x=>x.v+x.a));
+  $('#dep-load').innerHTML=L.length?L.map(x=>`<div class="row" title="${esc(x.n)}: ${x.v} vencidas, ${x.a} abiertas en tiempo"><span class="who">${esc(x.n)}</span><span class="bar" style="width:${Math.round((x.v+x.a)*100/max)}%">${x.v?`<i class="v" style="flex:${x.v}"></i>`:''}${x.a?`<i class="a" style="flex:${x.a}"></i>`:''}</span><span class="tot">${x.v+x.a}</span></div>`).join(''):'<div class="empty">Sin dependencias abiertas.</div>';
+  // actividades que esperan a CIEN
+  const byTask=new Map(); open.forEach(e=>depBlocks(e).forEach(id=>{ if(S.tasks[id].estatus==='hecho') return; (byTask.get(id)||byTask.set(id,[]).get(id)).push(e); }));
+  const imp=[...byTask].map(([id,ds])=>{ const tk=S.tasks[id]; const lastDue=ds.map(e=>e.compromiso&&e.compromiso>t?e.compromiso:t).sort().slice(-1)[0]; return {tk,ds,slack:daysBetween(lastDue,tk.fin)}; }).sort((a,b)=>a.slack-b.slack);
+  $('#dep-impact').innerHTML=imp.length?imp.map(x=>{ const cls=x.slack<0?'neg':x.slack<=7?'low':'ok'; const lab=x.slack<0?`atrasa ${-x.slack} d su fecha fin`:`holgura ${x.slack} d`;
+    return `<li class="dep-imp"><div class="tx" style="flex:1"><b>${esc(x.tk.nombre)}</b><span class="hint">Fin ${fmtD(x.tk.fin)} · espera ${x.ds.length} entregable${x.ds.length>1?'s':''} de ${esc([...new Set(x.ds.flatMap(e=>peopleOf(e.resp).map(p=>names.get(personKey(p))||p)))].join(', '))}</span></div><span class="slack ${cls}">${lab}</span></li>`; }).join('')
+    :'<li><div class="empty" style="flex:1">Ninguna actividad del plan está esperando a CIEN.</div></li>';
+}
 async function loadDocs(){
   try{
     const r=await fetch('docs.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return;
