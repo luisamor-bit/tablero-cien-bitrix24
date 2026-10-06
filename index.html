@@ -209,6 +209,70 @@ body.client [data-act="export"],body.client [data-act="import"],body.client [dat
 .detail .tx{flex:1}.detail .tx small{display:block;color:var(--muted);font-size:12px}
 .detail .due{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
 .conn.ro i{background:var(--navy)} .conn.saving i{background:var(--gold)}
+/* ---------- documentos del proyecto ---------- */
+.docs-card{margin-bottom:20px}
+.docs-card .hint{margin:-4px 0 12px}
+details.doc{border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:0 0 10px;overflow:hidden}
+details.doc[open]{border-color:var(--line2);box-shadow:var(--shadow)}
+details.doc>summary{list-style:none;cursor:pointer;padding:12px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+details.doc>summary::-webkit-details-marker{display:none}
+details.doc>summary:hover{background:var(--surface2)}
+details.doc>summary .dt{grid-row:span 2;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--surface);background:linear-gradient(135deg,var(--navy),var(--navy2));padding:4px 10px;border-radius:999px;white-space:nowrap}
+details.doc>summary b{font-size:15px;color:var(--text);min-width:0}
+details.doc>summary .dm{grid-column:2;font-size:12.5px;color:var(--muted);min-width:0}
+details.doc>summary .chev{grid-row:1 / span 2;grid-column:3;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line2);color:var(--muted);transition:transform .2s}
+details.doc[open]>summary .chev{transform:rotate(180deg)}
+@media (max-width:600px){details.doc>summary{grid-template-columns:minmax(0,1fr) auto}details.doc>summary .dt{grid-row:auto;justify-self:start}details.doc>summary .dm{grid-column:1}details.doc>summary .chev{grid-row:1 / span 3;grid-column:2}}
+.docbody{padding:4px 20px 20px;border-top:1px solid var(--line);font-size:14px;line-height:1.55;color:var(--text);max-width:100%}
+.docbody h3{font-size:16px;color:var(--navy);margin:22px 0 8px}
+.docbody h4{font-size:14px;margin:16px 0 6px}
+.docbody p,.docbody ul,.docbody ol{margin:8px 0}
+.docbody ul,.docbody ol{padding-left:22px}
+.docbody blockquote{margin:12px 0;padding:10px 14px;border-left:3px solid var(--navy2);background:var(--surface2);border-radius:0 8px 8px 0}
+.docbody blockquote p{margin:0}
+.docbody hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+.docbody code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;background:var(--surface2);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.docbody pre{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:12.5px;line-height:1.45}
+.docbody pre code{background:none;padding:0;overflow-wrap:normal}
+.docbody .tw{overflow-x:auto;margin:10px 0;border:1px solid var(--line);border-radius:8px}
+.docbody table{border-collapse:collapse;width:100%;font-size:13px}
+.docbody th{background:var(--surface2);text-align:left;font-weight:600;color:var(--navy)}
+.docbody th,.docbody td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.docbody tr:last-child td{border-bottom:0}
+.docbody .lead{font-size:15px;color:var(--muted);margin-top:14px}
+.docbody .note{background:var(--gold-soft);border-radius:8px;padding:10px 14px}
+figure.dg{margin:16px 0}
+.dg-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px}
+.dg-scroll svg{display:block;width:100%;min-width:720px;height:auto;font-family:var(--sans)}
+figure.dg figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
+.dg-box{fill:var(--surface);stroke:var(--line2);stroke-width:1.2}
+.dg-strong{stroke:var(--navy);stroke-width:1.8}
+.dg-hotbox{fill:var(--surface);stroke:var(--navy2);stroke-width:2.4}
+.dg-sub{fill:var(--surface2);stroke:var(--line)}
+.dg-q{fill:var(--surface);stroke:var(--navy);stroke-width:1.4}
+.dg-ok{fill:var(--ok-soft);stroke:var(--ok);stroke-width:1.6}
+.dg-pill{fill:var(--navy2)}
+.dg-pilltxt{fill:var(--surface);font-size:11.5px;font-weight:600;text-anchor:middle}
+.dg-t{fill:var(--text);font-size:13px;font-weight:600;text-anchor:middle}
+.dg-big{font-size:14.5px;fill:var(--navy)}
+.dg-fit{font-size:13.5px}
+.dg-s{fill:var(--muted);font-size:11.5px;text-anchor:middle}
+.dg-s2{fill:var(--text);font-size:12.5px;font-weight:500;text-anchor:middle}
+.dg-step{fill:var(--text);font-size:12.5px}
+.dg-col{fill:var(--faint);font-size:10.5px;font-weight:600;letter-spacing:.08em;text-anchor:middle}
+.dg-ln{stroke:var(--muted);stroke-width:1.5;fill:none}
+.dg-hot{stroke:var(--navy2);stroke-width:3}
+.dg-dash{stroke-dasharray:4 4}
+.dg-future{stroke:var(--gold);stroke-width:1.8;stroke-dasharray:7 5}
+.dg-cut{stroke:var(--bad);stroke-width:1.4;stroke-dasharray:3 5;opacity:.85}
+.dg-head{fill:var(--muted)}
+.dg-head-hot{fill:var(--navy2)}
+.dg-head-cut{fill:var(--bad)}
+.dg-lab{fill:var(--muted);font-size:11.5px;font-weight:500;text-anchor:middle}
+.dg-futtxt{fill:var(--gold);font-size:12px;font-weight:600;text-anchor:middle}
+.dg-cuttxt{fill:var(--bad);font-size:11.5px;font-weight:500}
+@media print{details.doc{break-inside:avoid}}
+
 </style>
 </head><body><div id="root"></div>
 <script id="state" type="application/json">{"meta": {"inicio": "2026-08-03", "semanas": 25, "nombre": "Tablero de proyecto Bitrix24", "actualizado": "2026-09-08T12:40:00.000Z"}, "tasks": {"f1": {"id": "f1", "tipo": "fase", "orden": 10, "nombre": "Preparación del proyecto", "fase": null, "resp": "", "estatus": "pendiente", "avance": 0, "inicio": "2026-08-03", "fin": "2026-09-11", "notas": ""}, "t04": {"id": "t04", "tipo": "tarea", "orden": 11, "fase": "f1", "nombre": "Confirmar alcance del proyecto / estructura (roles y responsabilidades)", "resp": "David Martínez · Fco. Quiroga", "estatus": "hecho", "avance": 100, "inicio": "2026-08-03", "fin": "2026-08-14", "notas": ""}, "t05": {"id": "t05", "tipo": "tarea", "orden": 12, "fase": "f1", "nombre": "Confirmar arquitectura técnica final", "resp": "Sergio Villa · WeCollab", "estatus": "hecho", "avance": 100, "inicio": "2026-08-03", "fin": "2026-08-14", "notas": ""}, "t06": {"id": "t06", "tipo": "tarea", "orden": 13, "fase": "f1", "nombre": "Confirmar recursos internos, negociación y contratación con proveedor Bitrix24", "resp": "David Martínez", "estatus": "curso", "avance": 80, "inicio": "2026-08-03", "fin": "2026-09-04", "notas": "WeCollab aprobado como proveedor principal."}, "t07": {"id": "t07", "tipo": "tarea", "orden": 14, "fase": "f1", "nombre": "Decidir estrategia de implementación y arranque (paralelo vs. big bang)", "resp": "Comité de Dirección · David Martínez", "estatus": "curso", "avance": 40, "inicio": "2026-08-24", "fin": "2026-09-04", "notas": ""}, "t08": {"id": "t08", "tipo": "tarea", "orden": 15, "fase": "f1", "nombre": "Detallar plan de trabajo, material para kickoff y fecha de kickoff", "resp": "Fco. Quiroga · Luis Amor", "estatus": "curso", "avance": 50, "inicio": "2026-08-31", "fin": "2026-09-11", "notas": ""}, "f2": {"id": "f2", "tipo": "fase", "orden": 20, "nombre": "Kickoff y arranque de instalación (diseño, configuración)", "fase": null, "resp": "", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-14", "fin": "2026-11-13", "notas": ""}, "t10": {"id": "t10", "tipo": "tarea", "orden": 21, "fase": "f2", "nombre": "Kickoff del proyecto", "resp": "Fco. Quiroga", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-14", "fin": "2026-09-18", "notas": ""}, "t11": {"id": "t11", "tipo": "tarea", "orden": 22, "fase": "f2", "nombre": "Visita del proveedor a instalaciones CIEN (Monterrey)", "resp": "WeCollab (Pepe · Luis)", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-21", "fin": "2026-09-25", "notas": ""}, "t12": {"id": "t12", "tipo": "tarea", "orden": 23, "fase": "f2", "nombre": "Detallar diseño (mapeo de procesos, estructura organizacional, embudos, campos personalizados)", "resp": "WeCollab · Call Center, Ventas, Servicio a Clientes", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-14", "fin": "2026-10-16", "notas": ""}, "t13": {"id": "t13", "tipo": "tarea", "orden": 24, "fase": "f2", "nombre": "Análisis técnico y conexiones Bitrix24 ↔ VOISO ↔ C3", "resp": "Edwin Jiménez · Sergio Villa · WeCollab", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-14", "fin": "2026-11-13", "notas": ""}, "t14": {"id": "t14", "tipo": "tarea", "orden": 25, "fase": "f2", "nombre": "Configuración Bitrix24 (cuenta, permisos, organigrama, personalizaciones)", "resp": "Pepe González (WeCollab)", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-21", "fin": "2026-11-13", "notas": ""}, "t15": {"id": "t15", "tipo": "tarea", "orden": 26, "fase": "f2", "nombre": "Modelado de embudo, canales e integraciones (bot de formularios)", "resp": "Luis Amor (WeCollab)", "estatus": "pendiente", "avance": 0, "inicio": "2026-09-21", "fin": "2026-11-13", "notas": ""}, "f3": {"id": "f3", "tipo": "fase", "orden": 30, "nombre": "Implementación", "fase": null, "resp": "", "estatus": "pendiente", "avance": 0, "inicio": "2026-11-16", "fin": "2026-12-11", "notas": ""}, "t17": {"id": "t17", "tipo": "tarea", "orden": 31, "fase": "f3", "nombre": "Migración de datos y pruebas integrales", "resp": "Orlando Morales · WeCollab", "estatus": "pendiente", "avance": 0, "inicio": "2026-11-16", "fin": "2026-12-04", "notas": ""}, "t18": {"id": "t18", "tipo": "tarea", "orden": 32, "fase": "f3", "nombre": "Capacitación", "resp": "WeCollab", "estatus": "pendiente", "avance": 0, "inicio": "2026-11-23", "fin": "2026-12-11", "notas": ""}, "f4": {"id": "f4", "tipo": "fase", "orden": 40, "nombre": "Arranque", "fase": null, "resp": "", "estatus": "pendiente", "avance": 0, "inicio": "2026-11-30", "fin": "2027-01-22", "notas": ""}, "t20": {"id": "t20", "tipo": "tarea", "orden": 41, "fase": "f4", "nombre": "Paralelo", "resp": "Áreas usuarias · Fco. Quiroga", "estatus": "pendiente", "avance": 0, "inicio": "2026-11-30", "fin": "2026-12-25", "notas": ""}, "t21": {"id": "t21", "tipo": "tarea", "orden": 42, "fase": "f4", "nombre": "Despliegue y soporte", "resp": "WeCollab", "estatus": "pendiente", "avance": 0, "inicio": "2026-12-28", "fin": "2027-01-22", "notas": ""}}, "log": {"l01": {"id": "l01", "fecha": "2026-09-04", "tipo": "nota", "texto": "Francisco Quiroga envía el plan de trabajo v6 (Excel) y pide a WeCollab tomarlo como base y ajustarlo. Queda como plan maestro del proyecto.", "autor": "Fco. Quiroga", "tareaId": "t08", "resp": "", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l02": {"id": "l02", "fecha": "2026-09-08", "tipo": "decision", "texto": "WeCollab confirmado como proveedor principal de la implementación Bitrix24.", "autor": "Luis Amor", "tareaId": "t06", "resp": "", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l03": {"id": "l03", "fecha": "2026-09-08", "tipo": "nota", "texto": "Responsables por actividad cargados como propuesta inicial a partir del organigrama del proyecto; pendiente validarlos con Quiroga.", "autor": "Luis Amor", "tareaId": "t08", "resp": "", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l04": {"id": "l04", "fecha": "2026-09-08", "tipo": "paso", "texto": "Fijar fecha firme de kickoff (semana del 14-sep) y de la visita a Monterrey (semana del 21-sep).", "autor": "Luis Amor", "tareaId": "t10", "resp": "Fco. Quiroga · Luis Amor", "compromiso": "2026-09-11", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l05": {"id": "l05", "fecha": "2026-09-08", "tipo": "paso", "texto": "Cerrar decisión de estrategia de arranque: paralelo vs. big bang.", "autor": "Luis Amor", "tareaId": "t07", "resp": "Comité de Dirección · David Martínez", "compromiso": "2026-09-11", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l06": {"id": "l06", "fecha": "2026-09-08", "tipo": "paso", "texto": "Identificar el CRM actual, volumen de registros y quién entrega la exportación para dimensionar la migración.", "autor": "Luis Amor", "tareaId": "t17", "resp": "Edwin Jiménez · Orlando Morales", "compromiso": "2026-09-18", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l07": {"id": "l07", "fecha": "2026-09-08", "tipo": "paso", "texto": "Documentar la lógica actual de VOISO (campañas de seguimiento) antes de diseñar la integración.", "autor": "Luis Amor", "tareaId": "t13", "resp": "Horacio Díaz · Sergio Villa", "compromiso": "2026-09-25", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l08": {"id": "l08", "fecha": "2026-09-08", "tipo": "paso", "texto": "Inventario de formularios y canales de entrada (web, Meta, WhatsApp, portal) que entran al bot en fase 1.", "autor": "Luis Amor", "tareaId": "t15", "resp": "Luis Amor · Mayra Fernández", "compromiso": "2026-09-25", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l09": {"id": "l09", "fecha": "2026-09-08", "tipo": "paso", "texto": "Definir punto único de contacto técnico de CIEN y accesos de administrador del portal Bitrix24 para WeCollab.", "autor": "Luis Amor", "tareaId": "t14", "resp": "Edwin Jiménez", "compromiso": "2026-09-18", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l10": {"id": "l10", "fecha": "2026-09-08", "tipo": "riesgo", "texto": "El paralelo cae en diciembre (S18–S21), cierre de año: nuestra propuesta recomendaba corte a mediados de noviembre. Mitigación: congelar configuración antes del 15-dic, definir cobertura en semanas vacacionales y plan si la migración se atrasa una semana.", "autor": "Luis Amor", "tareaId": "t20", "resp": "Fco. Quiroga · WeCollab", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l11": {"id": "l11", "fecha": "2026-09-08", "tipo": "riesgo", "texto": "Integración VOISO exige replicar la lógica actual de campañas de seguimiento, que no está documentada.", "autor": "Luis Amor", "tareaId": "t13", "resp": "Horacio Díaz · Sergio Villa", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}, "l12": {"id": "l12", "fecha": "2026-09-08", "tipo": "riesgo", "texto": "Apagar el Portal Superlativo es un cambio de hábito para usuarios: requiere plan de adopción y fecha de apagado acordada.", "autor": "Luis Amor", "tareaId": "t21", "resp": "Áreas usuarias · Fco. Quiroga", "compromiso": "", "hecho": false, "creado": "2026-09-08T12:27:02.622Z"}}}</script>
@@ -280,6 +344,11 @@ const MARKUP = `<header class="top">
 
   <!-- LOG -->
   <section class="panel" id="p-log">
+    <div class="card docs-card" id="docs-card" hidden>
+      <h2>Documentos del proyecto <span class="cnt" id="docs-cnt"></span></h2>
+      <p class="hint">Entregables formales del proyecto. Da clic en cada uno para desplegarlo; se actualizan junto con el tablero.</p>
+      <div id="docs"></div>
+    </div>
     <div class="two">
       <div class="card">
         <h2>Bitácora <span class="cnt" id="log-cnt"></span><span class="grow" style="flex:1"></span><button class="btn sm" data-act="new-step" title="Registra un compromiso concreto con responsable y fecha; aparece en la lista de pasos abiertos hasta que se marque como hecho.">+ Siguiente paso</button><button class="btn primary sm" data-act="new-log" title="Registra en la bitácora un avance, una decisión, un riesgo, un siguiente paso o una nota, ligado opcionalmente a una actividad.">+ Entrada</button></h2>
@@ -822,8 +891,19 @@ document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.ta
 $('#f-logtype').addEventListener('change',renderLog);
 try{ const t=localStorage.getItem(LS_KEY+'-tab'); if(t){ const b=$(`.tab[data-tab="${t}"]`); if(b) b.click(); } }catch(_){}
 
+async function loadDocs(){
+  try{
+    const r=await fetch('docs.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return;
+    const d=await r.json(); const list=(d&&d.docs)||[]; if(!list.length) return;
+    const fmt=s=>{ try{ return new Date(s+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}); }catch(_){ return s; } };
+    $('#docs').innerHTML=list.map(x=>`<details class="doc" id="doc-${esc(x.id)}"><summary><span class="dt">${esc(x.tipo)}</span><b>${esc(x.titulo)}</b><span class="dm">${esc(fmt(x.fecha))} · ${esc(x.resumen)}</span><span class="chev" aria-hidden="true">▾</span></summary><div class="docbody">${x.html}</div></details>`).join('');
+    $('#docs-cnt').textContent=list.length; $('#docs-card').hidden=false;
+  }catch(_){}
+}
 render();
 connect();
+loadDocs();
 })();
+
 </script>
 </body></html>
