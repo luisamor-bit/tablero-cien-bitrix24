@@ -321,6 +321,11 @@ label.f.chk{flex-direction:row;align-items:flex-start;gap:8px;color:var(--text);
 label.f.chk input{width:auto;margin-top:2px;flex:none}
 label.f.chk small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
 label.f select[multiple]{min-height:96px}
+.cierre{margin-top:4px;font-size:12px;color:var(--text);background:var(--ok-soft);border-radius:6px;padding:4px 8px;text-decoration:none;line-height:1.4}
+.cierre b{font-weight:600}
+.steps .tx .done{text-decoration:line-through;color:var(--muted)}
+.dep-tbl td.act{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+body.ro [data-act="close-log"],body.ro [data-act="new-dep"]{display:none!important}
 .dep-tbl .chip::before{display:none}
 
 </style>
@@ -492,6 +497,22 @@ const MARKUP = `<header class="top">
       <button type="button" class="btn danger" id="log-del">Eliminar</button>
       <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
       <button class="btn primary" value="ok">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-close">
+  <form method="dialog" id="form-close">
+    <h2 id="dlg-close-title">Cerrar paso</h2>
+    <p class="hint" id="close-what" style="margin:-4px 0 10px"></p>
+    <div class="grid">
+      <label class="f full">Comentario de cierre<textarea name="comentario" required placeholder="Qué se entregó, qué se validó o dónde quedó la evidencia. Ej.: Alcance validado por David, Edwin y Sergio sin observaciones."></textarea><small class="help">Queda registrado en la bitácora como evidencia de que el paso se cumplió.</small></label>
+      <label class="f">Cerrado por<input name="por" required placeholder="Nombre de quien cierra"></label>
+      <label class="f">Fecha de cierre<input type="date" name="fecha" required><small class="help">Fecha real en que se cumplió; con ella se calcula si llegó a tiempo.</small></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
+      <button class="btn primary" value="ok">Cerrar paso</button>
     </div>
   </form>
 </dialog>
@@ -813,13 +834,13 @@ function renderLog(){
   $('#log-cnt').textContent=`${list.length} entradas`;
   $('#log').innerHTML=list.length?list.map(e=>`<li data-id="${e.id}">
       <div class="d"><b>${fmtD(e.fecha)}</b>${(e.fecha||'').slice(0,4)}</div>
-      <div><div class="meta"><span class="chip t-${e.tipo}">${TIPO[e.tipo]||e.tipo}</span>${e.dep?'<span class="chip cien" title="Dependencia de CIEN">CIEN</span>':''}${e.tareaId&&S.tasks[e.tareaId]?`<span class="task">${esc(S.tasks[e.tareaId].nombre)}</span>`:''}${e.autor?`<span class="who">${esc(e.autor)}</span>`:''}${e.resp?`<span class="who">→ ${esc(e.resp)}</span>`:''}${e.compromiso?`<span class="who">compromiso ${fmtD(e.compromiso)}</span>`:''}${e.hecho?`<span class="chip s-hecho">cerrado</span>`:''}</div><div class="tx">${esc(e.texto)}</div></div>
+      <div><div class="meta"><span class="chip t-${e.tipo}">${TIPO[e.tipo]||e.tipo}</span>${e.dep?'<span class="chip cien" title="Dependencia de CIEN">CIEN</span>':''}${e.tareaId&&S.tasks[e.tareaId]?`<span class="task">${esc(S.tasks[e.tareaId].nombre)}</span>`:''}${e.autor?`<span class="who">${esc(e.autor)}</span>`:''}${e.resp?`<span class="who">→ ${esc(e.resp)}</span>`:''}${e.compromiso?`<span class="who">compromiso ${fmtD(e.compromiso)}</span>`:''}${e.hecho?`<span class="chip s-hecho">cerrado</span>`:''}</div><div class="tx">${esc(e.texto)}</div>${cierreTxt(e)}</div>
       <button class="btn sm ghost" data-act="edit-log" data-id="${e.id}">Editar</button></li>`).join('')
     :`<li><div class="empty" style="grid-column:1/-1">Sin entradas. Registra avances, decisiones, riesgos y siguientes pasos de cada junta.</div></li>`;
   const steps=entries.filter(e=>e.tipo==='paso').sort((a,b)=>(a.hecho-b.hecho)||(a.compromiso||'9').localeCompare(b.compromiso||'9'));
   const open=steps.filter(s=>!s.hecho);
   $('#steps-cnt').textContent=`${open.length} abiertos`;
-  $('#steps').innerHTML=steps.length?steps.slice(0,30).map(s=>`<li><input type="checkbox" data-act="toggle" data-id="${s.id}" ${s.hecho?'checked':''}><div class="tx ${s.hecho?'done':''}">${esc(s.texto)}${s.resp?`<div class="hint">${esc(s.resp)}</div>`:''}</div><span class="due ${!s.hecho&&s.compromiso&&s.compromiso<todayISO()?'late':''}">${s.compromiso?fmtD(s.compromiso):''}</span></li>`).join('')
+  $('#steps').innerHTML=steps.length?steps.slice(0,30).map(s=>`<li><input type="checkbox" data-act="toggle" data-id="${s.id}" ${s.hecho?'checked':''}><div class="tx"><span class="${s.hecho?'done':''}">${esc(s.texto)}</span>${s.resp?`<div class="hint">${esc(s.resp)}</div>`:''}${cierreTxt(s)}</div><span class="due ${!s.hecho&&s.compromiso&&s.compromiso<todayISO()?'late':''}">${s.compromiso?fmtD(s.compromiso):''}</span></li>`).join('')
     :`<li><div class="empty" style="flex:1">Agrega una entrada de tipo “Siguiente paso” con responsable y fecha compromiso.</div></li>`;
   const risks=entries.filter(e=>e.tipo==='riesgo'&&!e.hecho);
   $('#risk-cnt').textContent=`${risks.length}`;
@@ -973,7 +994,8 @@ document.addEventListener('click',e=>{
     else if(act==='export') openIO('export');
     else if(act==='download') downloadHTML();
     else if(act==='import') openIO('import');
-    else if(act==='toggle'){ const en=S.log[id]; if(en) store.setLog({...en,hecho:b.checked,cerrado:b.checked?todayISO():''}); }
+    else if(act==='toggle'){ const en=S.log[id]; if(!en) return; if(b.checked){ b.checked=false; openClose(id); } else if(confirm('¿Reabrir este paso? Se conservará el comentario de cierre anterior en el historial.')){ store.setLog({...en,hecho:false,cerrado:'',reabierto:todayISO(),cierreAnterior:[en.cerrado,en.cerradoPor,en.comentarioCierre].filter(Boolean).join(' · ')}); } else { b.checked=true; } }
+    else if(act==='close-log') openClose(id);
     return;
   }
   const bar=e.target.closest('.gantt .bar[data-id]'); if(bar && bar.dataset.id){ openTask(bar.dataset.id); return; }
@@ -986,6 +1008,24 @@ $('#f-logtype').addEventListener('change',renderLog);
 try{ const t=localStorage.getItem(LS_KEY+'-tab'); if(t){ const b=$(`.tab[data-tab="${t}"]`); if(b) b.click(); } }catch(_){}
 
 /* ---------- dependencias de CIEN ---------- */
+/* ---------- cierre de pasos con comentario ---------- */
+function cierreTxt(e){ if(!e.hecho||!(e.comentarioCierre||e.cerradoPor)) return ''; return `<div class="cierre"><b>✓ Cerrado${e.cerrado?' '+fmtD(e.cerrado):''}${e.cerradoPor?' · '+esc(e.cerradoPor):''}</b>${e.comentarioCierre?' — '+esc(e.comentarioCierre):''}</div>`; }
+const dlgC=$('#dlg-close'), formC=$('#form-close'); let closingLog=null;
+function openClose(id){
+  const e=S.log[id]; if(!e) return; closingLog=id;
+  $('#dlg-close-title').textContent=e.dep?'Marcar entregable de CIEN como cumplido':(e.tipo==='riesgo'?'Marcar riesgo como mitigado':'Cerrar paso');
+  $('#close-what').textContent=e.texto+(e.resp?' — '+e.resp:'');
+  formC.comentario.value=''; formC.fecha.value=todayISO();
+  formC.por.value=(function(){try{return localStorage.getItem(LS_KEY+'-autor')||''}catch(_){return ''}})();
+  dlgC.showModal();
+}
+formC.addEventListener('submit',ev=>{
+  if(ev.submitter && ev.submitter.value!=='ok') return;
+  const e=S.log[closingLog]; if(!e) return;
+  const por=formC.por.value.trim(); try{ localStorage.setItem(LS_KEY+'-autor',por); }catch(_){}
+  store.setLog({...e,hecho:true,cerrado:formC.fecha.value||todayISO(),cerradoPor:por,comentarioCierre:formC.comentario.value.trim()});
+  toast('Cerrado y registrado');
+});
 function personKey(n){ const w=n.trim().split(/\s+/); return ((w[0]||'').endsWith('.')&&w[1]?w[1]:(w[0]||'')).toLowerCase(); }
 function peopleOf(resp){ return String(resp||'').split(/\s*(?:·|,|\/|;|\s+y\s+)\s*/).map(s=>s.trim()).filter(Boolean); }
 function depsAll(){ return Object.values(S.log).filter(e=>e.dep); }
@@ -1031,7 +1071,7 @@ function renderDeps(){
   $('#dep-cnt').textContent=`${rows.length} ${showDone?'en total':'abiertas'}`;
   $('#dep-tbl').innerHTML=`<thead><tr><th>Qué debe entregar CIEN</th><th>Responsable</th><th>Compromiso</th><th>Estado</th><th>Detiene a</th><th></th></tr></thead><tbody>`+
     (rows.length?rows.map(e=>{ const s=st.get(e.id); const re=e.compromisoOriginal&&e.compromisoOriginal!==e.compromiso;
-      return `<tr><td class="name">${esc(e.texto)}${re?`<small class="re">Reprogramada · fecha original ${fmtDY(e.compromisoOriginal)}${depLate(e)?` · ${depLate(e)} d de atraso contra la original`:''}</small>`:''}</td><td>${esc(e.resp||'—')}</td><td class="num">${e.compromiso?fmtDY(e.compromiso):'—'}</td><td><span class="chip d-${s.k}${s.k==='hecho'&&s.late?' late':''}"><i class="ic" aria-hidden="true">${DEP_IC[s.k]}</i>${esc(s.label)}</span></td><td class="blq">${depBlocks(e).map(id=>`<span>${esc(S.tasks[id].nombre)}</span>`).join('')||'<span class="hint">—</span>'}</td><td class="act"><button class="btn sm ghost" data-act="edit-log" data-id="${e.id}">Editar</button></td></tr>`; }).join('')
+      return `<tr><td class="name">${esc(e.texto)}${re?`<small class="re">Reprogramada · fecha original ${fmtDY(e.compromisoOriginal)}${depLate(e)?` · ${depLate(e)} d de atraso contra la original`:''}</small>`:''}${cierreTxt(e)}</td><td>${esc(e.resp||'—')}</td><td class="num">${e.compromiso?fmtDY(e.compromiso):'—'}</td><td><span class="chip d-${s.k}${s.k==='hecho'&&s.late?' late':''}"><i class="ic" aria-hidden="true">${DEP_IC[s.k]}</i>${esc(s.label)}</span></td><td class="blq">${depBlocks(e).map(id=>`<span>${esc(S.tasks[id].nombre)}</span>`).join('')||'<span class="hint">—</span>'}</td><td class="act">${e.hecho?'':`<button class="btn sm" data-act="close-log" data-id="${e.id}" title="Marca este entregable como cumplido y registra el comentario de cierre">✓ Entregada</button>`}<button class="btn sm ghost" data-act="edit-log" data-id="${e.id}">Editar</button></td></tr>`; }).join('')
     :`<tr><td colspan="6"><div class="empty">${all.length?'Nada con este filtro.':'Aún no hay dependencias registradas. Usa “+ Dependencia”.'}</div></td></tr>`)+'</tbody>';
   // carga por responsable (solo abiertas)
   const load=new Map(); open.forEach(e=>peopleOf(e.resp).forEach(p=>{ const k=personKey(p); const o=load.get(k)||{n:names.get(k)||p,v:0,a:0}; if(st.get(e.id).k==='vencida') o.v++; else o.a++; load.set(k,o); }));
