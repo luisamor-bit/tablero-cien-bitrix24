@@ -325,6 +325,13 @@ label.f select[multiple]{min-height:96px}
 .cierre b{font-weight:600}
 .steps .tx .done{text-decoration:line-through;color:var(--muted)}
 .dep-tbl td.act{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+.rec-btn{margin-left:10px;align-self:center;white-space:nowrap}
+.recs{list-style:none;margin:0;padding:0;min-width:min(520px,80vw)}
+.recs li{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line)}
+.recs li:first-child{border-top:0}
+.recs a{font-weight:600;color:var(--navy);text-decoration:none}
+.recs a:hover{text-decoration:underline}
+.recs .hint{white-space:nowrap}
 body.ro [data-act="close-log"],body.ro [data-act="new-dep"]{display:none!important}
 .dep-tbl .chip::before{display:none}
 
@@ -354,6 +361,7 @@ const MARKUP = `<header class="top">
     <button class="tab" role="tab" data-tab="plan">Plan de trabajo</button>
     <button class="tab" role="tab" data-tab="log">Bitácora y siguientes pasos</button>
     <button class="tab" role="tab" data-tab="deps" title="Lo que Grupo CIEN debe entregar para que el proyecto avance">Dependencias CIEN<span class="tabcnt" id="deps-tab-cnt"></span></button>
+    <button class="btn sm rec-btn" data-act="recs" id="recs-btn" hidden title="Grabaciones de las juntas de seguimiento del proyecto">🎥 Grabación de sesiones</button>
     <span class="spacer"></span>
     <span class="conn" id="conn"><i></i><span>conectando…</span></span>
   </nav>
@@ -514,6 +522,15 @@ const MARKUP = `<header class="top">
       <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
       <button class="btn primary" value="ok">Cerrar paso</button>
     </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-recs">
+  <form method="dialog">
+    <h2>Grabación de sesiones</h2>
+    <p class="hint" style="margin:-4px 0 10px">Grabaciones de las juntas de seguimiento del proyecto. Se abren en una pestaña nueva.</p>
+    <ul class="recs" id="recs"></ul>
+    <div class="actions"><button class="btn">Cerrar</button></div>
   </form>
 </dialog>
 
@@ -988,6 +1005,7 @@ document.addEventListener('click',e=>{
     else if(act==='edit') openTask(id);
     else if(act==='up') move(id,-1);
     else if(act==='down') move(id,1);
+    else if(act==='recs') openRecs();
     else if(act==='new-dep') openLog(null,{tipo:'paso',dep:true});
     else if(act==='new-log') openLog(null);
     else if(act==='edit-log') openLog(id);
@@ -1084,10 +1102,17 @@ function renderDeps(){
     return `<li class="dep-imp"><div class="tx" style="flex:1"><b>${esc(x.tk.nombre)}</b><span class="hint">Fin ${fmtD(x.tk.fin)} · espera ${x.ds.length} entregable${x.ds.length>1?'s':''} de ${esc([...new Set(x.ds.flatMap(e=>peopleOf(e.resp).map(p=>names.get(personKey(p))||p)))].join(', '))}</span></div><span class="slack ${cls}">${lab}</span></li>`; }).join('')
     :'<li><div class="empty" style="flex:1">Ninguna actividad del plan está esperando a CIEN.</div></li>';
 }
+let RECS=[];
+function openRecs(){
+  const l=[...RECS].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  $('#recs').innerHTML=l.map(x=>`<li><a href="${esc(x.url)}" target="_blank" rel="noopener">▶ ${esc(x.titulo||'Sesión')}</a><span class="hint">${esc(x.fecha?fmtDY(x.fecha):'')}${x.fuente?' · '+esc(x.fuente):''}</span></li>`).join('');
+  $('#dlg-recs').showModal();
+}
 async function loadDocs(){
   try{
     const r=await fetch('docs.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return;
-    const d=await r.json(); const list=(d&&d.docs)||[]; if(!list.length) return;
+    const d=await r.json(); RECS=((d&&d.grabaciones)||[]).filter(x=>/^https:\/\//.test(x.url||'')); $('#recs-btn').hidden=!RECS.length;
+    const list=(d&&d.docs)||[]; if(!list.length) return;
     const fmt=s=>{ try{ return new Date(s+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}); }catch(_){ return s; } };
     $('#docs').innerHTML=list.map(x=>`<details class="doc" id="doc-${esc(x.id)}"><summary><span class="dt">${esc(x.tipo)}</span><b>${esc(x.titulo)}</b><span class="dm">${esc(fmt(x.fecha))} · ${esc(x.resumen)}</span><span class="chev" aria-hidden="true">▾</span></summary><div class="docbody">${x.html}</div></details>`).join('');
     $('#docs-cnt').textContent=list.length; $('#docs-card').hidden=false;
