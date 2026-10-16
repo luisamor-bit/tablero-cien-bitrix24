@@ -105,7 +105,18 @@ label.f small.help{color:var(--faint);font-size:11px;line-height:1.3}
 .chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
 .s-pendiente{background:var(--pend-soft);color:var(--pend)} .s-curso{background:var(--run-soft);color:var(--run)}
 .s-hecho{background:var(--ok-soft);color:var(--ok)} .s-bloqueado{background:var(--bad-soft);color:var(--bad)} .s-riesgo{background:var(--warn-soft);color:var(--warn)}
-.t-avance{background:var(--run-soft);color:var(--run)} .t-decision{background:var(--gold-soft);color:var(--gold)} .t-riesgo{background:var(--warn-soft);color:var(--warn)} .t-paso{background:var(--ok-soft);color:var(--ok)} .t-nota{background:var(--pend-soft);color:var(--muted)}
+.t-avance{background:var(--run-soft);color:var(--run)} .t-decision{background:var(--gold-soft);color:var(--gold)} .t-riesgo{background:var(--warn-soft);color:var(--warn)} .t-paso{background:var(--ok-soft);color:var(--ok)} .t-nota{background:var(--pend-soft);color:var(--muted)} .t-produccion{background:var(--navy);color:#fff}
+.prod-card{margin-bottom:20px}
+.prod-card .hint{margin:-4px 0 12px}
+.prod-tbl td.tx{min-width:240px}
+.prod-tbl td .sub{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.prod-tbl a{color:var(--run)}
+.chip.e-produccion{background:var(--ok-soft);color:var(--ok)}
+.chip.e-prueba{background:var(--warn-soft);color:var(--warn)}
+.chip.e-retirado{background:var(--pend-soft);color:var(--muted)}
+label.f.prod-only{display:none}
+#form-log.is-prod label.f.prod-only{display:flex}
+#form-log.is-prod label.f.noprod,#form-log.is-prod #lbl-bloquea{display:none!important}
 
 /* gantt */
 .gwrap{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:auto;box-shadow:var(--shadow)}
@@ -438,6 +449,11 @@ const MARKUP = `<header class="top">
 
   <!-- LOG -->
   <section class="panel" id="p-log">
+    <div class="card prod-card" id="prod-card">
+      <h2>Habilitado en producción <span class="cnt" id="prod-cnt"></span><span class="grow" style="flex:1"></span><button class="btn primary sm" data-act="new-prod" title="Registra algo que ya quedó configurado en el Bitrix24 de CIEN: qué es, dónde está y si ya se usa en producción o sigue en prueba.">+ Habilitado</button></h2>
+      <p class="hint">Solo lo operativo: lo que ya quedó configurado en el Bitrix24 productivo de CIEN (cien.bitrix24.mx), dónde verlo y si ya está habilitado o sigue en validación.</p>
+      <div class="tblwrap"><table class="tbl prod-tbl"><thead><tr><th>Fecha</th><th>Qué se habilitó</th><th>Área</th><th>Estado</th><th>Responsable</th><th></th></tr></thead><tbody id="prod"></tbody></table></div>
+    </div>
     <div class="card docs-card" id="docs-card" hidden>
       <h2>Documentos del proyecto <span class="cnt" id="docs-cnt"></span></h2>
       <p class="hint">Entregables formales del proyecto. Da clic en cada uno para desplegarlo; se actualizan junto con el tablero.</p>
@@ -447,7 +463,7 @@ const MARKUP = `<header class="top">
       <div class="card">
         <h2>Bitácora <span class="cnt" id="log-cnt"></span><span class="grow" style="flex:1"></span><button class="btn sm" data-act="new-step" title="Registra un compromiso concreto con responsable y fecha; aparece en la lista de pasos abiertos hasta que se marque como hecho.">+ Siguiente paso</button><button class="btn primary sm" data-act="new-log" title="Registra en la bitácora un avance, una decisión, un riesgo, un siguiente paso o una nota, ligado opcionalmente a una actividad.">+ Entrada</button></h2>
         <div class="toolbar" style="margin-bottom:6px">
-          <select class="btn" id="f-logtype"><option value="">Todo</option><option value="avance">Avances</option><option value="decision">Decisiones</option><option value="riesgo">Riesgos</option><option value="paso">Siguientes pasos</option><option value="nota">Notas</option></select>
+          <select class="btn" id="f-logtype"><option value="">Todo</option><option value="avance">Avances</option><option value="decision">Decisiones</option><option value="riesgo">Riesgos</option><option value="paso">Siguientes pasos</option><option value="nota">Notas</option><option value="produccion">Habilitado en producción</option></select>
         </div>
         <ul class="log" id="log"></ul>
       </div>
@@ -492,13 +508,16 @@ const MARKUP = `<header class="top">
     <h2 id="dlg-log-title">Entrada de bitácora</h2>
     <div class="grid">
       <label class="f">Fecha<input type="date" name="fecha" required></label>
-      <label class="f">Tipo<select name="tipo"><option value="avance">Avance</option><option value="decision">Decisión</option><option value="riesgo">Riesgo</option><option value="paso">Siguiente paso</option><option value="nota">Nota</option></select><small class="help">Avance: qué se hizo · Decisión: qué se acordó · Riesgo: qué puede fallar (se lista aparte) · Siguiente paso: compromiso con responsable y fecha · Nota: contexto.</small></label>
+      <label class="f">Tipo<select name="tipo"><option value="avance">Avance</option><option value="decision">Decisión</option><option value="riesgo">Riesgo</option><option value="paso">Siguiente paso</option><option value="nota">Nota</option><option value="produccion">Habilitado en producción</option></select><small class="help">Avance: qué se hizo · Decisión: qué se acordó · Riesgo: qué puede fallar (se lista aparte) · Siguiente paso: compromiso con responsable y fecha · Nota: contexto · Habilitado en producción: algo que ya quedó configurado en el Bitrix24 de CIEN.</small></label>
       <label class="f">Registrado por<input name="autor" placeholder="Luis / Pepe / Quiroga"></label>
       <label class="f">Actividad relacionada<select name="tareaId"><option value="">—</option></select></label>
       <label class="f full">Detalle<textarea name="texto" required></textarea></label>
+      <label class="f prod-only">Área<select name="area"><option>CRM · embudos y campos</option><option>Formularios y sitios</option><option>Integraciones</option><option>Telefonía</option><option>Bot y canales</option><option>Usuarios y permisos</option><option>Automatizaciones</option><option>Reportes</option><option>Otro</option></select></label>
+      <label class="f prod-only">Estado<select name="estado"><option value="produccion">Habilitado</option><option value="prueba">En validación / demo</option><option value="retirado">Retirado</option></select><small class="help">Habilitado: ya está configurado en el Bitrix24 productivo de CIEN. En validación: configurado, pero falta el visto bueno de CIEN o tiene registros de ejemplo.</small></label>
+      <label class="f full prod-only">Dónde verlo (liga)<input name="enlace" type="url" placeholder="https://cien.bitrix24.mx/crm/deal/..."></label>
       <label class="f">Responsable (pasos / riesgos)<input name="resp"></label>
-      <label class="f">Fecha compromiso<input type="date" name="compromiso"></label>
-      <label class="f full chk"><input type="checkbox" name="dep"><span><b>Dependencia de CIEN</b><small>Algo que Grupo CIEN debe entregar para que el proyecto avance. Aparece en la pestaña Dependencias CIEN, y la actividad relacionada queda marcada si se vence.</small></span></label>
+      <label class="f noprod">Fecha compromiso<input type="date" name="compromiso"></label>
+      <label class="f full chk noprod"><input type="checkbox" name="dep"><span><b>Dependencia de CIEN</b><small>Algo que Grupo CIEN debe entregar para que el proyecto avance. Aparece en la pestaña Dependencias CIEN, y la actividad relacionada queda marcada si se vence.</small></span></label>
       <label class="f full" id="lbl-bloquea">También detiene a<select name="bloquea" multiple></select><small class="help">La actividad principal es la de “Actividad relacionada”. Aquí puedes marcar otras que también esperan esta entrega (Ctrl o ⌘ + clic).</small></label>
     </div>
     <div class="actions">
@@ -560,7 +579,8 @@ const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 const uid = () => Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4);
 const todayISO = () => { const d=new Date(); return d.toISOString().slice(0,10); };
 const STATUS = {pendiente:'Pendiente', curso:'En curso', hecho:'Completado', bloqueado:'Bloqueado'};
-const TIPO = {avance:'Avance', decision:'Decisión', riesgo:'Riesgo', paso:'Siguiente paso', nota:'Nota'};
+const TIPO = {avance:'Avance', decision:'Decisión', riesgo:'Riesgo', paso:'Siguiente paso', nota:'Nota', produccion:'Producción'};
+const ESTADO = {produccion:'Habilitado', prueba:'En validación / demo', retirado:'Retirado'};
 const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const fmtD = iso => { if(!iso) return ''; const [y,m,d]=iso.split('-').map(Number); return `${d} ${MESES[m-1].toLowerCase()}`; };
 const fmtDY = iso => { if(!iso) return ''; const [y,m,d]=iso.split('-').map(Number); return `${d} ${MESES[m-1].toLowerCase()} ${y}`; };
@@ -863,6 +883,16 @@ function renderLog(){
   $('#risk-cnt').textContent=`${risks.length}`;
   $('#risks').innerHTML=risks.length?risks.map(s=>`<li><input type="checkbox" data-act="toggle" data-id="${s.id}" title="Marcar como mitigado"><div class="tx">${esc(s.texto)}${s.resp?`<div class="hint">${esc(s.resp)}</div>`:''}</div><span class="due">${s.compromiso?fmtD(s.compromiso):''}</span></li>`).join('')
     :`<li><div class="empty" style="flex:1">Sin riesgos abiertos.</div></li>`;
+  renderProd(entries);
+}
+function renderProd(entries){
+  const P=entries.filter(e=>e.tipo==='produccion');
+  const n=P.filter(e=>(e.estado||'produccion')==='produccion').length;
+  $('#prod-cnt').textContent=P.length?`${n} habilitados · ${P.length-n} en validación o retirados`:'';
+  const safe=u=>/^https?:\/\//i.test(u||'')?u:'';
+  $('#prod').innerHTML=P.length?P.map(e=>{const st=e.estado||'produccion', u=safe(e.enlace);
+    return `<tr><td class="num">${fmtD(e.fecha)}</td><td class="tx">${esc(e.texto)}${e.tareaId&&S.tasks[e.tareaId]?`<span class="sub">${esc(S.tasks[e.tareaId].nombre)}</span>`:''}${u?`<span class="sub"><a href="${esc(u)}" target="_blank" rel="noopener">Ver en Bitrix24 ↗</a></span>`:''}</td><td>${esc(e.area||'')}</td><td><span class="chip e-${st}">${ESTADO[st]||st}</span></td><td>${esc(e.resp||e.autor||'')}</td><td class="act"><button class="btn sm ghost" data-act="edit-log" data-id="${e.id}">Editar</button></td></tr>`}).join('')
+    :`<tr><td colspan="6"><div class="empty">Aún no hay nada registrado. Usa “+ Habilitado” cada vez que algo quede configurado en el Bitrix24 de CIEN.</div></td></tr>`;
 }
 function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -932,6 +962,8 @@ function openLog(id, preset={}){
   formL.bloquea.innerHTML=ordered().filter(t=>t.tipo!=='fase').map(t=>`<option value="${t.id}" ${blq.has(t.id)?'selected':''}>${esc(t.nombre)}</option>`).join('');
   $('#lbl-bloquea').style.display=formL.dep.checked?'':'none';
   if(!e&&preset.dep) $('#dlg-log-title').textContent='Nueva dependencia de CIEN';
+  formL.area.value=e?.area||'CRM · embudos y campos'; formL.estado.value=e?.estado||'produccion'; formL.enlace.value=e?.enlace||'';
+  syncProd(); if(!e&&preset.tipo==='produccion') $('#dlg-log-title').textContent='Nuevo habilitado en producción';
   $('#log-del').style.display=e?'':'none';
   dlgL.showModal();
 }
@@ -939,12 +971,15 @@ formL.addEventListener('submit',e=>{
   if(e.submitter && e.submitter.value!=='ok') return;
   const prev=editingLog?S.log[editingLog]:null;
   const en={ ...(prev||{}), id:editingLog||uid(), fecha:formL.fecha.value, tipo:formL.tipo.value, autor:formL.autor.value.trim(), tareaId:formL.tareaId.value||'', texto:formL.texto.value.trim(), resp:formL.resp.value.trim(), compromiso:formL.compromiso.value||'', hecho:prev?.hecho||false, creado:prev?.creado||new Date().toISOString() };
-  en.dep=formL.dep.checked;
+  en.dep=en.tipo==='produccion'?false:formL.dep.checked;
+  if(en.tipo==='produccion'){ en.area=formL.area.value; en.estado=formL.estado.value; en.enlace=formL.enlace.value.trim(); en.compromiso=''; }
   en.bloquea=en.dep?[...formL.bloquea.selectedOptions].map(o=>o.value).filter(v=>v!==en.tareaId):[];
   if(prev&&prev.compromiso&&prev.compromiso!==en.compromiso&&!prev.compromisoOriginal) en.compromisoOriginal=prev.compromiso;
   try{ localStorage.setItem(LS_KEY+'-autor',en.autor); }catch(_){}
   store.setLog(en); toast('Registrado');
 });
+function syncProd(){ formL.classList.toggle('is-prod',formL.tipo.value==='produccion'); }
+formL.tipo.addEventListener('change',syncProd);
 formL.dep.addEventListener('change',()=>{ $('#lbl-bloquea').style.display=formL.dep.checked?'':'none'; });
 $('#log-del').onclick=()=>{ if(editingLog && confirm('¿Eliminar esta entrada?')){ store.delLog(editingLog); dlgL.close(); } };
 
@@ -1008,6 +1043,7 @@ document.addEventListener('click',e=>{
     else if(act==='recs') openRecs();
     else if(act==='new-dep') openLog(null,{tipo:'paso',dep:true});
     else if(act==='new-log') openLog(null);
+    else if(act==='new-prod') openLog(null,{tipo:'produccion'});
     else if(act==='edit-log') openLog(id);
     else if(act==='export') openIO('export');
     else if(act==='download') downloadHTML();
