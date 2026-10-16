@@ -106,8 +106,19 @@ label.f small.help{color:var(--faint);font-size:11px;line-height:1.3}
 .s-pendiente{background:var(--pend-soft);color:var(--pend)} .s-curso{background:var(--run-soft);color:var(--run)}
 .s-hecho{background:var(--ok-soft);color:var(--ok)} .s-bloqueado{background:var(--bad-soft);color:var(--bad)} .s-riesgo{background:var(--warn-soft);color:var(--warn)}
 .t-avance{background:var(--run-soft);color:var(--run)} .t-decision{background:var(--gold-soft);color:var(--gold)} .t-riesgo{background:var(--warn-soft);color:var(--warn)} .t-paso{background:var(--ok-soft);color:var(--ok)} .t-nota{background:var(--pend-soft);color:var(--muted)} .t-produccion{background:var(--navy);color:#fff}
-.prod-card{margin-bottom:20px}
-.prod-card .hint{margin:-4px 0 12px}
+.prod-card{margin-bottom:12px}
+.prod-card .hint{margin:0}
+.fold>summary{list-style:none;cursor:pointer;border-radius:8px}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary h2{margin:0}
+.fold>summary:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+.fold>summary .sum{font-size:13px;color:var(--muted);font-weight:400}
+.fold .chev{margin-left:auto;color:var(--muted);transition:transform .2s;font-size:14px}
+.fold[open] .chev{transform:rotate(180deg)}
+.fold[open]>summary{margin-bottom:12px}
+.fold-tools{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap}
+.fold-tools .hint{flex:1;min-width:220px}
+@media (prefers-reduced-motion:reduce){.fold .chev{transition:none}}
 .prod-tbl td.tx{min-width:240px}
 .prod-tbl td .sub{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .prod-tbl a{color:var(--run)}
@@ -222,7 +233,7 @@ body.client [data-act="export"],body.client [data-act="import"],body.client [dat
 .conn.ro i{background:var(--navy)} .conn.saving i{background:var(--gold)}
 /* ---------- documentos del proyecto ---------- */
 .docs-card{margin-bottom:20px}
-.docs-card .hint{margin:-4px 0 12px}
+.docs-card .hint{margin:0 0 12px}
 details.doc{border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:0 0 10px;overflow:hidden}
 details.doc[open]{border-color:var(--line2);box-shadow:var(--shadow)}
 details.doc>summary{list-style:none;cursor:pointer;padding:12px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:center}
@@ -450,14 +461,18 @@ const MARKUP = `<header class="top">
   <!-- LOG -->
   <section class="panel" id="p-log">
     <div class="card prod-card" id="prod-card">
-      <h2>Habilitado en producción <span class="cnt" id="prod-cnt"></span><span class="grow" style="flex:1"></span><button class="btn primary sm" data-act="new-prod" title="Registra algo que ya quedó configurado en el Bitrix24 de CIEN: qué es, dónde está y si ya se usa en producción o sigue en prueba.">+ Habilitado</button></h2>
-      <p class="hint">Solo lo operativo: lo que ya quedó configurado en el Bitrix24 productivo de CIEN (cien.bitrix24.mx), dónde verlo y si ya está habilitado o sigue en validación.</p>
-      <div class="tblwrap"><table class="tbl prod-tbl"><thead><tr><th>Fecha</th><th>Qué se habilitó</th><th>Área</th><th>Estado</th><th>Responsable</th><th></th></tr></thead><tbody id="prod"></tbody></table></div>
+      <details class="fold" id="fold-prod">
+        <summary title="Mostrar u ocultar"><h2>Habilitado en producción <span class="cnt" id="prod-cnt"></span><span class="chev" aria-hidden="true">▾</span></h2></summary>
+        <div class="fold-tools"><p class="hint">Solo lo operativo: lo que ya quedó configurado en el Bitrix24 productivo de CIEN (cien.bitrix24.mx), dónde verlo y si ya está habilitado o sigue en validación.</p><button class="btn primary sm" data-act="new-prod" title="Registra algo que ya quedó configurado en el Bitrix24 de CIEN: qué es, dónde está y si ya está habilitado o sigue en validación.">+ Habilitado</button></div>
+        <div class="tblwrap"><table class="tbl prod-tbl"><thead><tr><th>Fecha</th><th>Qué se habilitó</th><th>Área</th><th>Estado</th><th>Responsable</th><th></th></tr></thead><tbody id="prod"></tbody></table></div>
+      </details>
     </div>
     <div class="card docs-card" id="docs-card" hidden>
-      <h2>Documentos del proyecto <span class="cnt" id="docs-cnt"></span></h2>
-      <p class="hint">Entregables formales del proyecto. Da clic en cada uno para desplegarlo; se actualizan junto con el tablero.</p>
-      <div id="docs"></div>
+      <details class="fold" id="fold-docs">
+        <summary title="Mostrar u ocultar"><h2>Documentos del proyecto <span class="cnt" id="docs-cnt"></span><span class="chev" aria-hidden="true">▾</span></h2></summary>
+        <p class="hint">Entregables formales del proyecto. Da clic en cada uno para desplegarlo; se actualizan junto con el tablero.</p>
+        <div id="docs"></div>
+      </details>
     </div>
     <div class="two">
       <div class="card">
@@ -978,6 +993,7 @@ formL.addEventListener('submit',e=>{
   try{ localStorage.setItem(LS_KEY+'-autor',en.autor); }catch(_){}
   store.setLog(en); toast('Registrado');
 });
+['fold-prod','fold-docs'].forEach(id=>{ const d=document.getElementById(id); if(!d) return; try{ if(localStorage.getItem(LS_KEY+'-'+id)==='1') d.open=true; }catch(_){} d.addEventListener('toggle',()=>{ try{ localStorage.setItem(LS_KEY+'-'+id,d.open?'1':'0'); }catch(_){} }); });
 function syncProd(){ formL.classList.toggle('is-prod',formL.tipo.value==='produccion'); }
 formL.tipo.addEventListener('change',syncProd);
 formL.dep.addEventListener('change',()=>{ $('#lbl-bloquea').style.display=formL.dep.checked?'':'none'; });
