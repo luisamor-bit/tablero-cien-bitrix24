@@ -155,7 +155,9 @@ label.f.prod-only{display:none}
 .gantt .bar.wc-block{background:repeating-linear-gradient(135deg,var(--bad-soft) 0 6px,var(--surface) 6px 12px);border-color:var(--bad)} .gantt .bar.wc-block .fill{background:var(--bad);opacity:.55}
 .gantt .bar.wc-wait{background:repeating-linear-gradient(135deg,var(--warn-soft) 0 6px,var(--surface) 6px 12px);border-color:var(--warn)} .gantt .bar.wc-wait .fill{background:var(--warn);opacity:.6}
 .gantt .bar.late{box-shadow:inset 0 0 0 2px var(--bad)}
-.gantt .lab .gf{font-size:10.5px;font-weight:600;border-radius:999px;padding:1px 7px;white-space:nowrap;flex:none}
+.gantt .lab .gf{font-size:10.5px;font-weight:600;border-radius:999px;padding:1px 7px;white-space:nowrap;flex:none;border:0;font-family:inherit;cursor:pointer}
+.gantt .lab .gf:hover{filter:brightness(1.15);text-decoration:underline}
+.gantt .lab .gf:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .gantt .lab .gf.b{background:var(--bad-soft);color:var(--bad)} .gantt .lab .gf.w{background:var(--warn-soft);color:var(--warn)} .gantt .lab .gf.l{background:var(--bad-soft);color:var(--bad)}
 .legend .hatch-b{background:repeating-linear-gradient(135deg,var(--bad) 0 3px,transparent 3px 6px);border:1px solid var(--bad)}
 .legend .hatch-w{background:repeating-linear-gradient(135deg,var(--warn) 0 3px,transparent 3px 6px);border:1px solid var(--warn)}
@@ -890,10 +892,11 @@ function renderGantt(){
     let gcls='', gflag='', gtip='';
     if(!isP && !t.virtual && t.estatus!=='hecho'){
       const ds=openDeps.filter(x=>depBlocks(x).includes(t.id)), dl=ds.filter(x=>x.compromiso&&x.compromiso<today);
-      if(t.estatus==='bloqueado'){ gflag='<span class="gf b">bloqueada</span>'; }
-      else if(dl.length){ gcls=' wc-block'; gflag=`<span class="gf b">⛓ detenida por CIEN</span>`; gtip=` · Detenida: ${dl.length} entregable(s) vencido(s) de CIEN`; }
-      else if(ds.length){ gcls=' wc-wait'; gflag=`<span class="gf w">⛓ espera a CIEN</span>`; gtip=` · Espera ${ds.length} entregable(s) de CIEN`; }
-      if(t.fin&&t.fin<today){ gcls+=' late'; if(!gflag) gflag='<span class="gf l">atrasada</span>'; gtip+=' · Atrasada: su fecha fin ya pasó'; }
+      const gb=(c,x)=>`<button type="button" class="gf ${c}" data-act="waits" data-id="${t.id}" title="Ver qué está pendiente y cerrarlo">${x}</button>`;
+      if(t.estatus==='bloqueado'){ gflag=gb('b','bloqueada'); }
+      else if(dl.length){ gcls=' wc-block'; gflag=gb('b','⛓ detenida por CIEN'); gtip=` · Detenida: ${dl.length} entregable(s) vencido(s) de CIEN`; }
+      else if(ds.length){ gcls=' wc-wait'; gflag=gb('w','⛓ espera a CIEN'); gtip=` · Espera ${ds.length} entregable(s) de CIEN`; }
+      if(t.fin&&t.fin<today){ gcls+=' late'; if(!gflag) gflag=gb('l','atrasada'); gtip+=' · Atrasada: su fecha fin ya pasó'; }
     }
     h+=`<div class="lab ${isP?'phase':''}" style="grid-row:${r}" title="${esc(t.nombre)}${t.resp?' — '+esc(t.resp):''}${esc(gtip)}">${isP?'':`<span class="chip s-${t.estatus}" style="padding:1px 6px;font-size:10px"></span>`}<span class="nm">${esc(t.nombre)}</span>${gflag}${t.resp&&!isP&&!gflag?`<span class="rs">${esc(t.resp)}</span>`:''}</div>`;
     for(let w=1;w<=W;w++){
@@ -1084,6 +1087,24 @@ formIO.addEventListener('submit',e=>{
 });
 
 /* ---------- KPI detail ---------- */
+function openWaits(taskId){
+  const t=S.tasks[taskId]; if(!t) return;
+  const today=todayISO();
+  const ds=depsAll().filter(x=>!x.hecho&&depBlocks(x).includes(taskId)).sort((a,b)=>(a.compromiso||'9').localeCompare(b.compromiso||'9'));
+  const steps=Object.values(S.log).filter(x=>!x.dep&&!x.hecho&&x.tipo==='paso'&&x.tareaId===taskId).sort((a,b)=>(a.compromiso||'9').localeCompare(b.compromiso||'9'));
+  const li=(e,isDep)=>{ const late=e.compromiso&&e.compromiso<today;
+    const chip=isDep?`<span class="chip ${late?'d-vencida':'d-tiempo'}">${late?'CIEN · vencido':'CIEN · en tiempo'}</span>`:`<span class="chip t-paso">Paso</span>`;
+    const btns=readOnly?'':`<button type="button" class="btn sm" data-act="close-log" data-id="${e.id}" data-close="1" title="Registra el cierre con comentario">✓ ${isDep?'Entregada':'Cerrar'}</button><button type="button" class="btn sm ghost" data-act="edit-log" data-id="${e.id}" data-close="1">Editar</button>`;
+    return `<li>${chip}<div class="tx">${esc(e.texto)}<small>${esc(e.resp||'Sin responsable')}</small></div><span class="due">${e.compromiso?fmtD(e.compromiso):'sin fecha'}</span>${btns}</li>`; };
+  let html=ds.map(e=>li(e,true)).join('')+steps.map(e=>li(e,false)).join('');
+  const notes=[];
+  if(t.estatus==='bloqueado') notes.push('La actividad está marcada como <b>bloqueada</b>. Al resolverse, cambia su estatus en “Editar actividad”.');
+  if(t.fin&&t.fin<today&&t.estatus!=='hecho') notes.push(`Su fecha fin (${fmtD(t.fin)}) ya pasó. Si ya se terminó, márcala como completada; si no, ajusta la fecha en “Editar actividad”.`);
+  if(notes.length||!html) html+=`<li><div class="tx">${notes.join('<br>')||'No hay pendientes abiertos ligados a esta actividad.'}</div>${readOnly?'':`<button type="button" class="btn sm" data-act="edit" data-id="${t.id}" data-close="1">Editar actividad</button>`}</li>`;
+  $('#dlg-detail-title').textContent=`Pendiente · ${t.nombre}`;
+  $('#detail').innerHTML=html;
+  $('#dlg-detail').showModal();
+}
 function openDetail(k){
   const tasks=Object.values(S.tasks).filter(t=>t.tipo!=='fase');
   let title='', items=[];
@@ -1127,6 +1148,7 @@ document.addEventListener('click',e=>{
     else if(act==='new-dep') openLog(null,{tipo:'paso',dep:true});
     else if(act==='new-log') openLog(null);
     else if(act==='new-prod') openLog(null,{tipo:'produccion'});
+    else if(act==='waits') openWaits(id);
     else if(act==='more'){ const c=b.previousElementSibling; c.classList.toggle('open'); b.textContent=c.classList.contains('open')?'ver menos':'ver más'; }
     else if(act==='edit-log') openLog(id);
     else if(act==='export') openIO('export');
