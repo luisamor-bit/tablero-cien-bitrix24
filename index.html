@@ -1124,6 +1124,8 @@ document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.ta
 ['#f-status','#f-resp'].forEach(s=>$(s).addEventListener('input',renderPlan));
 $('#f-logtype').addEventListener('change',renderLog);
 $('#f-closed').addEventListener('change',renderLog);
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setTimeout(markClamps,30)));
+window.addEventListener('resize',()=>requestAnimationFrame(markClamps));
 document.querySelectorAll('#p-log details.fold').forEach(d=>d.addEventListener('toggle',()=>requestAnimationFrame(markClamps)));
 ['#f-deps-resp','#f-deps-done'].forEach(s=>$(s).addEventListener('change',renderDeps));
 try{ const t=localStorage.getItem(LS_KEY+'-tab'); if(t){ const b=$(`.tab[data-tab="${t}"]`); if(b) b.click(); } }catch(_){}
