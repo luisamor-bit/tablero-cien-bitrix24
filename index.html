@@ -152,6 +152,13 @@ label.f.prod-only{display:none}
 .gantt .bar.hecho{background:var(--ok-soft)} .gantt .bar.hecho .fill{background:var(--ok)}
 .gantt .bar.pendiente{background:var(--pend-soft);border-color:var(--line2)} .gantt .bar.pendiente .fill{background:var(--pend)}
 .gantt .bar.bloqueado{background:var(--bad-soft)} .gantt .bar.bloqueado .fill{background:var(--bad)}
+.gantt .bar.wc-block{background:repeating-linear-gradient(135deg,var(--bad-soft) 0 6px,var(--surface) 6px 12px);border-color:var(--bad)} .gantt .bar.wc-block .fill{background:var(--bad);opacity:.55}
+.gantt .bar.wc-wait{background:repeating-linear-gradient(135deg,var(--warn-soft) 0 6px,var(--surface) 6px 12px);border-color:var(--warn)} .gantt .bar.wc-wait .fill{background:var(--warn);opacity:.6}
+.gantt .bar.late{box-shadow:inset 0 0 0 2px var(--bad)}
+.gantt .lab .gf{font-size:10.5px;font-weight:600;border-radius:999px;padding:1px 7px;white-space:nowrap;flex:none}
+.gantt .lab .gf.b{background:var(--bad-soft);color:var(--bad)} .gantt .lab .gf.w{background:var(--warn-soft);color:var(--warn)} .gantt .lab .gf.l{background:var(--bad-soft);color:var(--bad)}
+.legend .hatch-b{background:repeating-linear-gradient(135deg,var(--bad) 0 3px,transparent 3px 6px);border:1px solid var(--bad)}
+.legend .hatch-w{background:repeating-linear-gradient(135deg,var(--warn) 0 3px,transparent 3px 6px);border:1px solid var(--warn)}
 .gantt .bar:hover{outline:2px solid var(--gold)}
 .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted);align-items:center}
 .legend span{display:inline-flex;align-items:center;gap:6px}
@@ -424,6 +431,9 @@ const MARKUP = `<header class="top">
       <span><b style="background:var(--run)"></b>En curso (relleno = % avance)</span>
       <span><b style="background:var(--pend-soft);border:1px solid var(--line2)"></b>Pendiente</span>
       <span><b style="background:var(--bad)"></b>Bloqueado</span>
+      <span><b class="hatch-b"></b>Detenida por CIEN (entregable vencido)</span>
+      <span><b class="hatch-w"></b>Espera a CIEN (entregable en tiempo)</span>
+      <span><b style="background:transparent;box-shadow:inset 0 0 0 2px var(--bad)"></b>Atrasada (pasó su fecha fin)</span>
       <span><b style="background:var(--navy);height:5px"></b>Fase</span>
       <span><b style="background:var(--today);width:2px"></b>Semana actual</span>
       <span class="hint">Clic en una barra para editar.</span>
@@ -873,17 +883,26 @@ function renderGantt(){
   }
   for(let w=1;w<=W;w++) h+=`<div class="hcell wk ${w===tw?'now':''}" style="grid-column:${w+1};grid-row:2" title="${fmtDY(addDays(S.meta.inicio,(w-1)*7))}">S${w}</div>`;
   let r=3;
+  const today=todayISO(), openDeps=depsAll().filter(x=>!x.hecho);
   for(const t of rows){
     const isP=t.tipo==='fase';
     const s=Math.max(1,weekOf(t.inicio)), e=Math.min(W,weekOf(t.fin));
-    h+=`<div class="lab ${isP?'phase':''}" style="grid-row:${r}" title="${esc(t.nombre)}${t.resp?' — '+esc(t.resp):''}">${isP?'':`<span class="chip s-${t.estatus}" style="padding:1px 6px;font-size:10px"></span>`}<span class="nm">${esc(t.nombre)}</span>${t.resp&&!isP?`<span class="rs">${esc(t.resp)}</span>`:''}</div>`;
+    let gcls='', gflag='', gtip='';
+    if(!isP && !t.virtual && t.estatus!=='hecho'){
+      const ds=openDeps.filter(x=>depBlocks(x).includes(t.id)), dl=ds.filter(x=>x.compromiso&&x.compromiso<today);
+      if(t.estatus==='bloqueado'){ gflag='<span class="gf b">bloqueada</span>'; }
+      else if(dl.length){ gcls=' wc-block'; gflag=`<span class="gf b">⛓ detenida por CIEN</span>`; gtip=` · Detenida: ${dl.length} entregable(s) vencido(s) de CIEN`; }
+      else if(ds.length){ gcls=' wc-wait'; gflag=`<span class="gf w">⛓ espera a CIEN</span>`; gtip=` · Espera ${ds.length} entregable(s) de CIEN`; }
+      if(t.fin&&t.fin<today){ gcls+=' late'; if(!gflag) gflag='<span class="gf l">atrasada</span>'; gtip+=' · Atrasada: su fecha fin ya pasó'; }
+    }
+    h+=`<div class="lab ${isP?'phase':''}" style="grid-row:${r}" title="${esc(t.nombre)}${t.resp?' — '+esc(t.resp):''}${esc(gtip)}">${isP?'':`<span class="chip s-${t.estatus}" style="padding:1px 6px;font-size:10px"></span>`}<span class="nm">${esc(t.nombre)}</span>${gflag}${t.resp&&!isP&&!gflag?`<span class="rs">${esc(t.resp)}</span>`:''}</div>`;
     for(let w=1;w<=W;w++){
       const ms=new Date(addDays(S.meta.inicio,(w-1)*7)+'T00:00:00').getDate()<=7;
       h+=`<div class="cell ${isP?'phase':''} ${ms?'month-start':''} ${w===tw?'today':''}" style="grid-column:${w+1};grid-row:${r}"></div>`;
     }
     if(e>=s){
       const pct=isP?t.avance:(t.estatus==='hecho'?100:(+t.avance||0));
-      h+=`<div class="bar ${isP?'phase':t.estatus}" data-id="${t.virtual?'':t.id}" style="grid-column:${s+1}/${e+2};grid-row:${r}" title="${esc(t.nombre)} · ${fmtD(t.inicio)} → ${fmtD(t.fin)} · ${pct}%">${isP?'':`<i class="fill" style="width:${pct}%"></i>`}</div>`;
+      h+=`<div class="bar ${isP?'phase':t.estatus}${gcls}" data-id="${t.virtual?'':t.id}" style="grid-column:${s+1}/${e+2};grid-row:${r}" title="${esc(t.nombre)} · ${fmtD(t.inicio)} → ${fmtD(t.fin)} · ${pct}%${esc(gtip)}">${isP?'':`<i class="fill" style="width:${pct}%"></i>`}</div>`;
     }
     r++;
   }
