@@ -232,8 +232,27 @@ body.client [data-act="export"],body.client [data-act="import"],body.client [dat
 .detail .due{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
 .conn.ro i{background:var(--navy)} .conn.saving i{background:var(--gold)}
 /* ---------- documentos del proyecto ---------- */
-.docs-card{margin-bottom:20px}
+.docs-card{margin-bottom:12px}
 .docs-card .hint{margin:0 0 12px}
+.fold-card{margin-bottom:12px}
+.sumstrip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.sumstrip .st{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;box-shadow:var(--shadow)}
+.sumstrip .st b{display:block;font-size:24px;line-height:1.1;color:var(--navy);font-variant-numeric:tabular-nums}
+.sumstrip .st span{font-size:12.5px;color:var(--muted)}
+.sumstrip .st .bad{color:var(--bad);font-weight:600}
+.next-card{margin-bottom:12px}
+.next-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.col-h{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 0 6px;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-weight:500}
+.col-h::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--gold)}
+.col-h.wc::before{background:var(--run)}
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.clamp3{-webkit-line-clamp:3}
+.clamp.open{display:block;-webkit-line-clamp:unset}
+.more{background:none;border:0;padding:0;margin-top:2px;color:var(--run);font-size:12px;cursor:pointer}
+.more[hidden]{display:none}
+.hist-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.hist-tools label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+@media (max-width:900px){.sumstrip{grid-template-columns:1fr}.next-cols{grid-template-columns:1fr;gap:12px}}
 details.doc{border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:0 0 10px;overflow:hidden}
 details.doc[open]{border-color:var(--line2);box-shadow:var(--shadow)}
 details.doc>summary{list-style:none;cursor:pointer;padding:12px 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:center}
@@ -460,6 +479,14 @@ const MARKUP = `<header class="top">
 
   <!-- LOG -->
   <section class="panel" id="p-log">
+    <div class="sumstrip" id="sumstrip"></div>
+    <div class="card next-card">
+      <h2>Lo que sigue <span class="cnt" id="next-cnt"></span><span class="grow" style="flex:1"></span><button class="btn sm" data-act="new-step" title="Registra un compromiso concreto con responsable y fecha.">+ Siguiente paso</button></h2>
+      <div class="next-cols">
+        <div><h3 class="col-h">Le toca a CIEN <span class="cnt" id="next-cien-cnt"></span></h3><ul class="steps" id="next-cien"></ul></div>
+        <div><h3 class="col-h wc">Le toca a WeCollab <span class="cnt" id="next-wc-cnt"></span></h3><ul class="steps" id="next-wc"></ul></div>
+      </div>
+    </div>
     <div class="card prod-card" id="prod-card">
       <details class="fold" id="fold-prod">
         <summary title="Mostrar u ocultar"><h2>Habilitado en producción <span class="cnt" id="prod-cnt"></span><span class="chev" aria-hidden="true">▾</span></h2></summary>
@@ -474,24 +501,29 @@ const MARKUP = `<header class="top">
         <div id="docs"></div>
       </details>
     </div>
-    <div class="two">
-      <div class="card">
-        <h2>Bitácora <span class="cnt" id="log-cnt"></span><span class="grow" style="flex:1"></span><button class="btn sm" data-act="new-step" title="Registra un compromiso concreto con responsable y fecha; aparece en la lista de pasos abiertos hasta que se marque como hecho.">+ Siguiente paso</button><button class="btn primary sm" data-act="new-log" title="Registra en la bitácora un avance, una decisión, un riesgo, un siguiente paso o una nota, ligado opcionalmente a una actividad.">+ Entrada</button></h2>
-        <div class="toolbar" style="margin-bottom:6px">
+    <div class="card fold-card">
+      <details class="fold" id="fold-risks">
+        <summary title="Mostrar u ocultar"><h2>Riesgos abiertos <span class="cnt" id="risk-cnt"></span><span class="chev" aria-hidden="true">▾</span></h2></summary>
+        <ul class="steps" id="risks"></ul>
+      </details>
+    </div>
+    <div class="card fold-card">
+      <details class="fold" id="fold-dec">
+        <summary title="Mostrar u ocultar"><h2>Decisiones <span class="cnt" id="dec-cnt"></span><span class="chev" aria-hidden="true">▾</span></h2></summary>
+        <ul class="log" id="decs"></ul>
+      </details>
+    </div>
+    <div class="card fold-card">
+      <details class="fold" id="fold-log">
+        <summary title="Mostrar u ocultar"><h2>Historial completo de la bitácora <span class="cnt" id="log-cnt"></span><span class="chev" aria-hidden="true">▾</span></h2></summary>
+        <div class="hist-tools">
           <select class="btn" id="f-logtype"><option value="">Todo</option><option value="avance">Avances</option><option value="decision">Decisiones</option><option value="riesgo">Riesgos</option><option value="paso">Siguientes pasos</option><option value="nota">Notas</option><option value="produccion">Habilitado en producción</option></select>
+          <label><input type="checkbox" id="f-closed"> Mostrar cerrados</label>
+          <span class="grow" style="flex:1"></span>
+          <button class="btn primary sm" data-act="new-log" title="Registra un avance, una decisión, un riesgo, un siguiente paso o una nota.">+ Entrada</button>
         </div>
         <ul class="log" id="log"></ul>
-      </div>
-      <div>
-        <div class="card" style="margin-bottom:20px">
-          <h2>Siguientes pasos abiertos <span class="cnt" id="steps-cnt"></span></h2>
-          <ul class="steps" id="steps"></ul>
-        </div>
-        <div class="card">
-          <h2>Riesgos abiertos <span class="cnt" id="risk-cnt"></span></h2>
-          <ul class="steps" id="risks"></ul>
-        </div>
-      </div>
+      </details>
     </div>
   </section>
 </main>
@@ -879,26 +911,42 @@ function renderPlan(){
   $('#plan').innerHTML=h;
 }
 
+const WC_RX=/\b(luis|pepe|daniel|nicol[aá]s|wecollab)\b/i;
+function owner(e){ if(e.dep) return 'cien'; const first=(e.resp||'').split(/[·,/]| y /)[0]; if(WC_RX.test(first)) return 'wc'; if(!e.resp && WC_RX.test(e.autor||'')) return 'wc'; return e.resp?'cien':'wc'; }
+function nextJunta(){ const d=new Date(); const t=new Date(d.getFullYear(),d.getMonth(),d.getDate()); let add=(3-t.getDay()+7)%7; if(add===0 && (d.getHours()>10||(d.getHours()===10&&d.getMinutes()>30))) add=7; t.setDate(t.getDate()+add); return t; }
+function clampTx(t,n){ return `<span class="clamp${n===3?' clamp3':''}">${esc(t)}</span><button type="button" class="more" data-act="more" hidden>ver más</button>`; }
+function stepLi(s){ const late=!s.hecho&&s.compromiso&&s.compromiso<todayISO();
+  return `<li><input type="checkbox" data-act="toggle" data-id="${s.id}" ${s.hecho?'checked':''} title="Marcar como cumplido"><div class="tx">${clampTx(s.texto,2)}<div class="hint">${esc(s.resp||'')}${s.tareaId&&S.tasks[s.tareaId]?` · ${esc(S.tasks[s.tareaId].nombre)}`:''}</div>${cierreTxt(s)}</div><span class="due ${late?'late':''}">${s.compromiso?fmtD(s.compromiso):'sin fecha'}${late?'<br>vencido':''}</span></li>`; }
+function markClamps(){ document.querySelectorAll('#p-log .clamp').forEach(c=>{ const m=c.nextElementSibling; if(m&&m.classList.contains('more')) m.hidden=!(c.scrollHeight>c.clientHeight+2) && !c.classList.contains('open'); }); }
 function renderLog(){
-  const ft=$('#f-logtype').value;
+  const ft=$('#f-logtype').value, showClosed=$('#f-closed').checked;
   const entries=Object.values(S.log).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||(b.creado||'').localeCompare(a.creado||''));
-  const list=entries.filter(e=>!ft||e.tipo===ft);
-  $('#log-cnt').textContent=`${list.length} entradas`;
-  $('#log').innerHTML=list.length?list.map(e=>`<li data-id="${e.id}">
-      <div class="d"><b>${fmtD(e.fecha)}</b>${(e.fecha||'').slice(0,4)}</div>
-      <div><div class="meta"><span class="chip t-${e.tipo}">${TIPO[e.tipo]||e.tipo}</span>${e.dep?'<span class="chip cien" title="Dependencia de CIEN">CIEN</span>':''}${e.tareaId&&S.tasks[e.tareaId]?`<span class="task">${esc(S.tasks[e.tareaId].nombre)}</span>`:''}${e.autor?`<span class="who">${esc(e.autor)}</span>`:''}${e.resp?`<span class="who">→ ${esc(e.resp)}</span>`:''}${e.compromiso?`<span class="who">compromiso ${fmtD(e.compromiso)}</span>`:''}${e.hecho?`<span class="chip s-hecho">cerrado</span>`:''}</div><div class="tx">${esc(e.texto)}</div>${cierreTxt(e)}</div>
-      <button class="btn sm ghost" data-act="edit-log" data-id="${e.id}">Editar</button></li>`).join('')
-    :`<li><div class="empty" style="grid-column:1/-1">Sin entradas. Registra avances, decisiones, riesgos y siguientes pasos de cada junta.</div></li>`;
-  const steps=entries.filter(e=>e.tipo==='paso').sort((a,b)=>(a.hecho-b.hecho)||(a.compromiso||'9').localeCompare(b.compromiso||'9'));
-  const open=steps.filter(s=>!s.hecho);
-  $('#steps-cnt').textContent=`${open.length} abiertos`;
-  $('#steps').innerHTML=steps.length?steps.slice(0,30).map(s=>`<li><input type="checkbox" data-act="toggle" data-id="${s.id}" ${s.hecho?'checked':''}><div class="tx"><span class="${s.hecho?'done':''}">${esc(s.texto)}</span>${s.resp?`<div class="hint">${esc(s.resp)}</div>`:''}${cierreTxt(s)}</div><span class="due ${!s.hecho&&s.compromiso&&s.compromiso<todayISO()?'late':''}">${s.compromiso?fmtD(s.compromiso):''}</span></li>`).join('')
-    :`<li><div class="empty" style="flex:1">Agrega una entrada de tipo “Siguiente paso” con responsable y fecha compromiso.</div></li>`;
+  const today=todayISO();
+  const open=entries.filter(e=>e.tipo==='paso'&&!e.hecho).sort((a,b)=>(a.compromiso||'9').localeCompare(b.compromiso||'9'));
+  const C=open.filter(e=>owner(e)==='cien'), W=open.filter(e=>owner(e)==='wc');
+  const lateN=a=>a.filter(e=>e.compromiso&&e.compromiso<today).length;
+  const nj=nextJunta(), njTx=(t=>t.charAt(0).toUpperCase()+t.slice(1))(nj.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'short'}));
+  $('#sumstrip').innerHTML=`<div class="st"><b>${C.length}</b><span>pendientes de CIEN${lateN(C)?` · <span class="bad">${lateN(C)} vencidos</span>`:''}</span></div><div class="st"><b>${W.length}</b><span>pendientes de WeCollab${lateN(W)?` · <span class="bad">${lateN(W)} vencidos</span>`:''}</span></div><div class="st"><b style="font-size:18px">${esc(njTx)}</b><span>próxima junta semanal · 9:30 a.m.</span></div>`;
+  $('#next-cnt').textContent=`${open.length} abiertos`;
+  $('#next-cien-cnt').textContent=C.length; $('#next-wc-cnt').textContent=W.length;
+  $('#next-cien').innerHTML=C.length?C.map(stepLi).join(''):`<li><div class="empty" style="flex:1">Nada pendiente de CIEN.</div></li>`;
+  $('#next-wc').innerHTML=W.length?W.map(stepLi).join(''):`<li><div class="empty" style="flex:1">Nada pendiente de WeCollab.</div></li>`;
   const risks=entries.filter(e=>e.tipo==='riesgo'&&!e.hecho);
   $('#risk-cnt').textContent=`${risks.length}`;
-  $('#risks').innerHTML=risks.length?risks.map(s=>`<li><input type="checkbox" data-act="toggle" data-id="${s.id}" title="Marcar como mitigado"><div class="tx">${esc(s.texto)}${s.resp?`<div class="hint">${esc(s.resp)}</div>`:''}</div><span class="due">${s.compromiso?fmtD(s.compromiso):''}</span></li>`).join('')
+  $('#risks').innerHTML=risks.length?risks.map(s=>`<li><input type="checkbox" data-act="toggle" data-id="${s.id}" title="Marcar como mitigado"><div class="tx">${clampTx(s.texto,2)}${s.resp?`<div class="hint">${esc(s.resp)}</div>`:''}</div><span class="due">${s.compromiso?fmtD(s.compromiso):''}</span></li>`).join('')
     :`<li><div class="empty" style="flex:1">Sin riesgos abiertos.</div></li>`;
+  const decs=entries.filter(e=>e.tipo==='decision');
+  $('#dec-cnt').textContent=`${decs.length}`;
+  $('#decs').innerHTML=decs.length?decs.map(e=>`<li><div class="d"><b>${fmtD(e.fecha)}</b>${(e.fecha||'').slice(0,4)}</div><div><div class="tx">${clampTx(e.texto,3)}</div></div><span></span></li>`).join(''):`<li><div class="empty" style="grid-column:1/-1">Sin decisiones registradas.</div></li>`;
+  const list=entries.filter(e=>(!ft||e.tipo===ft)&&(showClosed||!e.hecho));
+  $('#log-cnt').textContent=`${list.length} entradas${showClosed?'':' abiertas'}`;
+  $('#log').innerHTML=list.length?list.map(e=>`<li data-id="${e.id}">
+      <div class="d"><b>${fmtD(e.fecha)}</b>${(e.fecha||'').slice(0,4)}</div>
+      <div><div class="meta"><span class="chip t-${e.tipo}">${TIPO[e.tipo]||e.tipo}</span>${e.dep?'<span class="chip cien" title="Dependencia de CIEN">CIEN</span>':''}${e.tareaId&&S.tasks[e.tareaId]?`<span class="task">${esc(S.tasks[e.tareaId].nombre)}</span>`:''}${e.resp?`<span class="who">→ ${esc(e.resp)}</span>`:''}${e.compromiso?`<span class="who">compromiso ${fmtD(e.compromiso)}</span>`:''}${e.hecho?`<span class="chip s-hecho">cerrado</span>`:''}</div><div class="tx">${clampTx(e.texto,3)}</div>${cierreTxt(e)}</div>
+      <button class="btn sm ghost" data-act="edit-log" data-id="${e.id}">Editar</button></li>`).join('')
+    :`<li><div class="empty" style="grid-column:1/-1">Sin entradas con este filtro.</div></li>`;
   renderProd(entries);
+  requestAnimationFrame(markClamps);
 }
 function renderProd(entries){
   const P=entries.filter(e=>e.tipo==='produccion');
@@ -993,7 +1041,7 @@ formL.addEventListener('submit',e=>{
   try{ localStorage.setItem(LS_KEY+'-autor',en.autor); }catch(_){}
   store.setLog(en); toast('Registrado');
 });
-['fold-prod','fold-docs'].forEach(id=>{ const d=document.getElementById(id); if(!d) return; try{ if(localStorage.getItem(LS_KEY+'-'+id)==='1') d.open=true; }catch(_){} d.addEventListener('toggle',()=>{ try{ localStorage.setItem(LS_KEY+'-'+id,d.open?'1':'0'); }catch(_){} }); });
+['fold-prod','fold-docs','fold-risks','fold-dec','fold-log'].forEach(id=>{ const d=document.getElementById(id); if(!d) return; try{ if(localStorage.getItem(LS_KEY+'-'+id)==='1') d.open=true; }catch(_){} d.addEventListener('toggle',()=>{ try{ localStorage.setItem(LS_KEY+'-'+id,d.open?'1':'0'); }catch(_){} }); });
 function syncProd(){ formL.classList.toggle('is-prod',formL.tipo.value==='produccion'); }
 formL.tipo.addEventListener('change',syncProd);
 formL.dep.addEventListener('change',()=>{ $('#lbl-bloquea').style.display=formL.dep.checked?'':'none'; });
@@ -1060,6 +1108,7 @@ document.addEventListener('click',e=>{
     else if(act==='new-dep') openLog(null,{tipo:'paso',dep:true});
     else if(act==='new-log') openLog(null);
     else if(act==='new-prod') openLog(null,{tipo:'produccion'});
+    else if(act==='more'){ const c=b.previousElementSibling; c.classList.toggle('open'); b.textContent=c.classList.contains('open')?'ver menos':'ver más'; }
     else if(act==='edit-log') openLog(id);
     else if(act==='export') openIO('export');
     else if(act==='download') downloadHTML();
@@ -1074,6 +1123,8 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.matches('.kpi[data-act="kpi"]')){ e.preventDefault(); openDetail(e.target.dataset.k); } });
 ['#f-status','#f-resp'].forEach(s=>$(s).addEventListener('input',renderPlan));
 $('#f-logtype').addEventListener('change',renderLog);
+$('#f-closed').addEventListener('change',renderLog);
+document.querySelectorAll('#p-log details.fold').forEach(d=>d.addEventListener('toggle',()=>requestAnimationFrame(markClamps)));
 ['#f-deps-resp','#f-deps-done'].forEach(s=>$(s).addEventListener('change',renderDeps));
 try{ const t=localStorage.getItem(LS_KEY+'-tab'); if(t){ const b=$(`.tab[data-tab="${t}"]`); if(b) b.click(); } }catch(_){}
 
