@@ -783,12 +783,14 @@ function renderKpis(){
   // avance de los entregables a cargo de WeCollab en diseño y configuración (fases con orden <= 20)
   const isWC=t=>/WeCollab|Luis Amor|Pepe Gonz|Daniel Luna/i.test(t.resp||'');
   const phOrd=id=>{ const p=Object.values(S.tasks).find(x=>x.id===id&&x.tipo==='fase'); return p?(+p.orden||0):999; };
-  const wc=tasks.filter(t=>isWC(t)&&phOrd(t.fase)<=20);
+  const openDep=id=>Object.values(S.log).some(e=>e.dep&&!e.hecho&&(e.tareaId===id||(Array.isArray(e.bloquea)&&e.bloquea.includes(id))));
+  // se excluyen las que no han podido arrancar (0%, pendientes) por un entregable de CIEN vencido o abierto
+  const wc=tasks.filter(t=>isWC(t)&&phOrd(t.fase)<=20&&!(t.estatus==='pendiente'&&!(+t.avance)&&openDep(t.id)));
   const wcAvg=wc.length?Math.round(wc.reduce((s,t)=>s+(+t.avance||0),0)/wc.length):0;
   $('#kpis').innerHTML=[
     ['S'+wk,'semana del plan · '+fmtD(todayISO()),'',false],
     [avg+'%','avance global','',false],
-    [wcAvg+'%','entregables WeCollab · diseño y configuración','wc',false],
+    [wcAvg+'%','entregables WeCollab · diseño y configuración (sin los detenidos por CIEN)','wc',false],
     [done+'/'+n,'actividades completadas','hecho',true],
     [run,'en curso','curso',true],
     [late,'vencidas','vencidas',true],
