@@ -780,14 +780,20 @@ function renderKpis(){
   const wk=weekOf(todayISO());
   const late=tasks.filter(t=>t.estatus!=='hecho' && t.fin<todayISO()).length;
   const steps=Object.values(S.log).filter(e=>e.tipo==='paso'&&!e.hecho).length;
+  // avance de los entregables a cargo de WeCollab en diseño y configuración (fases con orden <= 20)
+  const isWC=t=>/WeCollab|Luis Amor|Pepe Gonz|Daniel Luna/i.test(t.resp||'');
+  const phOrd=id=>{ const p=Object.values(S.tasks).find(x=>x.id===id&&x.tipo==='fase'); return p?(+p.orden||0):999; };
+  const wc=tasks.filter(t=>isWC(t)&&phOrd(t.fase)<=20);
+  const wcAvg=wc.length?Math.round(wc.reduce((s,t)=>s+(+t.avance||0),0)/wc.length):0;
   $('#kpis').innerHTML=[
     ['S'+wk,'semana del plan · '+fmtD(todayISO()),'',false],
     [avg+'%','avance global','',false],
+    [wcAvg+'%','entregables WeCollab · diseño y configuración','wc',false],
     [done+'/'+n,'actividades completadas','hecho',true],
     [run,'en curso','curso',true],
     [late,'vencidas','vencidas',true],
     [steps,'pasos abiertos','pasos',true],
-  ].concat(blk?[[blk,'bloqueadas','bloqueado',true]]:[]).map(([v,l,k,c])=>`<div class="kpi ${c?'clickable':''}" ${c?`data-act="kpi" data-k="${k}" role="button" tabindex="0"`:''}><div class="v" style="${k==='vencidas'&&v?'color:var(--bad)':''}${k===''&&l.startsWith('semana')?'color:var(--navy)':''}${k==='bloqueado'?'color:var(--bad)':''}">${v}</div><div class="l">${l}</div></div>`).join('');
+  ].concat(blk?[[blk,'bloqueadas','bloqueado',true]]:[]).map(([v,l,k,c])=>`<div class="kpi ${c?'clickable':''}" ${c?`data-act="kpi" data-k="${k}" role="button" tabindex="0"`:''}><div class="v" style="${k==='vencidas'&&v?'color:var(--bad)':''}${k===''&&l.startsWith('semana')?'color:var(--navy)':''}${k==='bloqueado'?'color:var(--bad)':''}${k==='wc'?'color:var(--navy2)':''}">${v}</div><div class="l">${l}</div></div>`).join('');
   renderObra(avg, wk);
   $('#title').textContent=S.meta.nombre||'Tablero de proyecto Bitrix24';
   const u=S.meta.actualizado; $('#updated').textContent=u?('Última actualización: '+new Date(u).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'})):'';
