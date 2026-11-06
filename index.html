@@ -780,17 +780,11 @@ function renderKpis(){
   const wk=weekOf(todayISO());
   const late=tasks.filter(t=>t.estatus!=='hecho' && t.fin<todayISO()).length;
   const steps=Object.values(S.log).filter(e=>e.tipo==='paso'&&!e.hecho).length;
-  // avance de los entregables a cargo de WeCollab en diseño y configuración (fases con orden <= 20)
-  const isWC=t=>/WeCollab|Luis Amor|Pepe Gonz|Daniel Luna/i.test(t.resp||'');
-  const phOrd=id=>{ const p=Object.values(S.tasks).find(x=>x.id===id&&x.tipo==='fase'); return p?(+p.orden||0):999; };
-  const openDep=id=>Object.values(S.log).some(e=>e.dep&&!e.hecho&&(e.tareaId===id||(Array.isArray(e.bloquea)&&e.bloquea.includes(id))));
-  // se excluyen las que no han podido arrancar (0%, pendientes) por un entregable de CIEN vencido o abierto
-  const wc=tasks.filter(t=>isWC(t)&&phOrd(t.fase)<=20&&!(t.estatus==='pendiente'&&!(+t.avance)&&openDep(t.id)));
-  const wcAvg=wc.length?Math.round(wc.reduce((s,t)=>s+(+t.avance||0),0)/wc.length):0;
+  const wcAvg=wcSet().avg;
   $('#kpis').innerHTML=[
     ['S'+wk,'semana del plan · '+fmtD(todayISO()),'',false],
     [avg+'%','avance global','',false],
-    [wcAvg+'%','entregables WeCollab · diseño y configuración (sin los detenidos por CIEN)','wc',false],
+    [wcAvg+'%','entregables WeCollab · diseño y configuración (sin los detenidos por CIEN)','wc',true],
     [done+'/'+n,'actividades completadas','hecho',true],
     [run,'en curso','curso',true],
     [late,'vencidas','vencidas',true],
@@ -1113,6 +1107,19 @@ function openWaits(taskId){
   $('#detail').innerHTML=html;
   $('#dlg-detail').showModal();
 }
+/* entregables a cargo de WeCollab en diseño y configuración (fases con orden <= 20).
+   Se excluyen las actividades que no han podido arrancar (pendientes, 0%) por un entregable de CIEN abierto o vencido. */
+function wcSet(){
+  const tasks=Object.values(S.tasks).filter(t=>t.tipo!=='fase');
+  const isWC=t=>/WeCollab|Luis Amor|Pepe Gonz|Daniel Luna/i.test(t.resp||'');
+  const phOrd=id=>{ const p=Object.values(S.tasks).find(x=>x.id===id&&x.tipo==='fase'); return p?(+p.orden||0):999; };
+  const openDep=id=>Object.values(S.log).some(e=>e.dep&&!e.hecho&&(e.tareaId===id||(Array.isArray(e.bloquea)&&e.bloquea.includes(id))));
+  const all=tasks.filter(t=>isWC(t)&&phOrd(t.fase)<=20);
+  const excl=all.filter(t=>t.estatus==='pendiente'&&!(+t.avance)&&openDep(t.id));
+  const inc=all.filter(t=>!excl.includes(t));
+  const avg=inc.length?Math.round(inc.reduce((s,t)=>s+(+t.avance||0),0)/inc.length):0;
+  return {inc,excl,avg};
+}
 function openDetail(k){
   const tasks=Object.values(S.tasks).filter(t=>t.tipo!=='fase');
   let title='', items=[];
@@ -1121,9 +1128,17 @@ function openDetail(k){
   else if(k==='hecho'){ title='Actividades completadas'; items=tasks.filter(t=>t.estatus==='hecho').map(T); }
   else if(k==='bloqueado'){ title='Actividades bloqueadas'; items=tasks.filter(t=>t.estatus==='bloqueado').map(T); }
   else if(k==='vencidas'){ title='Actividades vencidas (fecha fin pasada y no completadas)'; items=tasks.filter(t=>t.estatus!=='hecho'&&t.fin<todayISO()).sort((a,b)=>a.fin.localeCompare(b.fin)).map(T); }
+  else if(k==='wc'){
+    const w=wcSet(); const ord={hecho:0,curso:1,bloqueado:2,pendiente:3};
+    const sum=w.inc.reduce((s,t)=>s+(+t.avance||0),0);
+    title=`Entregables WeCollab · diseño y configuración · ${w.avg}%`;
+    items=w.inc.slice().sort((a,b)=>(ord[a.estatus]??9)-(ord[b.estatus]??9)||(+b.avance||0)-(+a.avance||0)).map(T);
+    items.unshift({id:'',kind:'',tx:`Cómo se calcula: promedio simple del % de avance de las ${w.inc.length} actividades de preparación, diseño y configuración cuyo responsable es WeCollab (${sum} puntos ÷ ${w.inc.length} = ${w.avg}%). Completadas: ${w.inc.filter(t=>t.estatus==='hecho').length} · en curso: ${w.inc.filter(t=>t.estatus==='curso').length} · pendientes: ${w.inc.filter(t=>t.estatus==='pendiente').length}.`,sub:'No incluye las fases de implementación, paralelo y arranque, que corren de noviembre a enero según el plan.',due:'',chip:'<span class="chip">fórmula</span>'});
+    w.excl.forEach(t=>items.push({id:t.id,kind:'task',tx:t.nombre,sub:(t.resp||'—')+' · fuera del cálculo: no ha podido arrancar por un entregable de CIEN pendiente',due:fmtD(t.inicio)+' → '+fmtD(t.fin),chip:'<span class="chip s-bloqueado">espera a CIEN · no cuenta</span>'}));
+  }
   else if(k==='pasos'){ title='Siguientes pasos abiertos'; items=Object.values(S.log).filter(e=>e.tipo==='paso'&&!e.hecho).sort((a,b)=>(a.compromiso||'9').localeCompare(b.compromiso||'9')).map(e=>({id:e.id,kind:'log',tx:e.texto,sub:(e.resp||'')+(e.tareaId&&S.tasks[e.tareaId]?' · '+S.tasks[e.tareaId].nombre:''),due:e.compromiso?'compromiso '+fmtD(e.compromiso):'',chip:e.compromiso&&e.compromiso<todayISO()?'<span class="chip s-bloqueado">vencido</span>':''})); }
   $('#dlg-detail-title').textContent=title+` (${items.length})`;
-  $('#detail').innerHTML=items.length?items.map(i=>`<li>${i.chip}<div class="tx">${esc(i.tx)}<small>${esc(i.sub)}</small></div><span class="due">${i.due}</span>${readOnly?'':`<button type="button" class="btn sm" data-act="${i.kind==='task'?'edit':'edit-log'}" data-id="${i.id}" data-close="1">Editar</button>`}</li>`).join('')
+  $('#detail').innerHTML=items.length?items.map(i=>`<li>${i.chip}<div class="tx">${esc(i.tx)}<small>${esc(i.sub)}</small></div><span class="due">${i.due}</span>${(readOnly||!i.kind)?'':`<button type="button" class="btn sm" data-act="${i.kind==='task'?'edit':'edit-log'}" data-id="${i.id}" data-close="1">Editar</button>`}</li>`).join('')
     :'<li><div class="empty" style="flex:1">Nada por aquí.</div></li>';
   $('#dlg-detail').showModal();
 }
