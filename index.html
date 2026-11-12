@@ -692,7 +692,7 @@ async function apiFlush(){
   catch(e){ console.error(e); apiQueue.unshift(...ops); setConn('local','sin conexión · reintentando'); setTimeout(apiFlush,5000); }
   finally{ apiBusy=false; if(apiQueue.length) apiFlush(); }
 }
-async function apiPoll(){ if(apiBusy||apiQueue.length) return; try{ applyState(await apiGet()); }catch(_){} }
+async function apiPoll(){ if(apiBusy||apiQueue.length) return; try{ const o=await apiGet(); if(o && o.tasks && Object.keys(o.tasks).length) applyState(o); }catch(_){} }
 
 function schedulePublish(){
   dirty=true; S.meta.actualizado=new Date().toISOString();
@@ -740,7 +740,7 @@ async function connect(){
   API = (S.meta && S.meta.api) || (remote && remote.meta && remote.meta.api) || null;
   if(!API){ enterReadOnly('vista publicada · solo lectura'); return; }
   setConn('saving','conectando…');
-  try{ const o=await apiGet(); if(o && o.tasks && Object.keys(o.tasks).length){ applyState(o); } else { /* empty backend: seed it with what we have */ store.replaceAll({meta:S.meta,tasks:S.tasks,log:S.log}); }
+  try{ const o=await apiGet(); if(o && o.tasks && Object.keys(o.tasks).length){ applyState(o); } else { /* backend vacío o con error: nunca resembrar automáticamente (11-nov-2026); se entra en solo lectura */ enterReadOnly('el servidor respondió sin datos · solo lectura, avisa a WeCollab'); return; }
     setConn('live','edición compartida · los cambios se guardan para todos'); }
   catch(e){ console.error(e); enterReadOnly('sin conexión con el servidor · solo lectura'); return; }
   pollT=setInterval(apiPoll,30000);
